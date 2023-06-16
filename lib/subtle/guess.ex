@@ -1,14 +1,18 @@
 defmodule Subtle.Guess do
   @moduledoc """
-  Documentation for `Guess`.
   Functions for guesses and letter comparisons.
   """
-#  alias __MODULE__
+
+  alias __MODULE__
+
+  @enforce_keys [:guess]
+  defstruct [:guess, :results]
+
+  def new(guess, results) do
+    %Guess{guess: guess, results: results}
+  end
 
 #I have no idea how to typedef what I want, so dynamic it is!
-#  @enforce_keys [:guess]
-#  defstruct [:guess, :results]
-
  # @letter_position [:correct, :wrong_position, :wrong_letter]
 
 #  @type guess_result_tuple :: {
@@ -17,28 +21,44 @@ defmodule Subtle.Guess do
 #  }
 
   @doc """
-  guess_word/2
+  Function that takes a guess and compares it to the answer.
 
-  ## Examples
-      # guess apple for paper
+  ### Examples
+      Guess apple for paper
+
       iex> Guess.guess_word("apple", "paper")
-      {:ok, [ {"a", :wrong_position}, {"p", :wrong_position},
-              {"p", :correct}, {"l", :wrong_letter},
-              {"e", :wrong_position} ]}
-      # guess paper for paper
+      {:ok, :incorrect,
+        %Guess{
+          guess: "apple"
+          results: [
+            {"a", :wrong_position}, {"p", :wrong_position},
+            {"p", :correct}, {"l", :wrong_letter},
+            {"e", :wrong_position}
+          ]
+        }}
+
+      Guess paper for paper
+
       iex> Guess.guess_word("paper", "paper")
-      {:ok, correct}
+      {:ok, correct,
+        %Guess{
+          guess: "paper"
+          results: [
+            {"p", :correct}, {"a", :correct}, {"p", :correct},
+            {"e", :correct}, {"r", :correct}
+          ]
+        }}
   """
   def guess_word(guess, answer)
   when is_binary(guess) and is_binary(answer) and guess == answer
   do
-    {:ok, :correct}
+    {:ok, :correct, new(answer, compare_letters(answer))}
   end
   def guess_word(guess, answer) when is_binary(guess) and is_binary(answer)
   do
     answer_len = String.length(answer)
     case String.length(guess) do
-      ^answer_len -> {:ok, compare_letters(guess, answer)}
+      ^answer_len -> {:ok, :incorrect, new(guess, compare_letters(guess, answer))}
       _           -> {:error, :invalid_length}
     end
   end
@@ -85,6 +105,7 @@ defmodule Subtle.Guess do
     # return only the answers, not the counts
     answers
   end
+  def compare_letters(answer), do: compare_letters(answer, answer)
 
   @doc """
   process_letter_pair/2

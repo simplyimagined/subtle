@@ -83,27 +83,43 @@ defmodule Subtle.GuessTest do
 
   describe "guess_word/2" do
     test "guess apple for apple" do
-      assert Guess.guess_word("apple", "apple") == {:ok, :correct}
+      assert Guess.guess_word("apple", "apple") ==
+        {:ok, :correct,
+          %Guess{
+            guess: "apple",
+            results: [
+              {"a", :correct},
+              {"p", :correct},
+              {"p", :correct},
+              {"l", :correct},
+              {"e", :correct}
+            ]
+          }}
     end
 
     test "guess apple for paper" do
       assert Guess.guess_word("apple", "paper") ==
-        {:ok,
-          [
-            {"a", :wrong_position},
-            {"p", :wrong_position},
-            {"p", :correct},
-            {"l", :wrong_letter},
-            {"e", :wrong_position}
-          ]}
+        {:ok, :incorrect,
+          %Guess{
+            guess: "apple",
+            results: [
+              {"a", :wrong_position},
+              {"p", :wrong_position},
+              {"p", :correct},
+              {"l", :wrong_letter},
+              {"e", :wrong_position}
+            ]
+          }}
     end
 
     test "mismatched word length" do
-      assert Guess.guess_word("audacious", "pizza") == {:error, :invalid_length}
+      assert Guess.guess_word("audacious", "pizza") ==
+        {:error, :invalid_length}
     end
 
     test "invalid inputs" do
-      assert Guess.guess_word(100, "pizza") == {:error, :invalid_arguments}
+      assert Guess.guess_word(100, "pizza") ==
+        {:error, :invalid_arguments}
     end
   end
 end
