@@ -8,7 +8,17 @@ defmodule Subtle.Application do
   @impl true
   def start(_type, _args) do
     children = [
-      # Starts a worker by calling: Subtle.Worker.start_link(arg)
+      # Start the Telemetry supervisor
+      SubtleWeb.Telemetry,
+      # Start the Ecto repository
+      Subtle.Repo,
+      # Start the PubSub system
+      {Phoenix.PubSub, name: Subtle.PubSub},
+      # Start Finch
+      {Finch, name: Subtle.Finch},
+      # Start the Endpoint (http/https)
+      SubtleWeb.Endpoint
+      # Start a worker by calling: Subtle.Worker.start_link(arg)
       # {Subtle.Worker, arg}
     ]
 
@@ -16,5 +26,13 @@ defmodule Subtle.Application do
     # for other strategies and supported options
     opts = [strategy: :one_for_one, name: Subtle.Supervisor]
     Supervisor.start_link(children, opts)
+  end
+
+  # Tell Phoenix to update the endpoint configuration
+  # whenever the application is updated.
+  @impl true
+  def config_change(changed, _new, removed) do
+    SubtleWeb.Endpoint.config_change(changed, removed)
+    :ok
   end
 end
