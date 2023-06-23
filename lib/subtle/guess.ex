@@ -13,7 +13,7 @@ defmodule Subtle.Guess do
   end
 
 #I have no idea how to typedef what I want, so dynamic it is!
- # @letter_position [:correct, :wrong_position, :wrong_letter]
+ # @letter_position [:correct, :wrong_position, :wrong_letter, :none]
 
 #  @type guess_result_tuple :: {
 #    letter: String.t,
