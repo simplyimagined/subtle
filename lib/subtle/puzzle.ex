@@ -5,20 +5,22 @@ defmodule Subtle.Puzzle do
 
   alias Subtle.{Puzzle, Guess}
 
+  @max_guesses 5
+
   @enforce_keys [:state, :answer, :guesses]
   defstruct [
     state: :playing,
     answer: "",
+    max_guesses: @max_guesses,
     guesses: []
   ]
-
-  @max_guesses 5
 
   def new() do
     Puzzle.new(random_puzzle_word())
   end
   def new(answer) do
-    %Puzzle{state: :playing, answer: answer, guesses: []}
+    %Puzzle{state: :playing, answer: answer,
+             max_guesses: @max_guesses, guesses: []}
   end
 
   def make_guess(%Puzzle{state: :playing} = puzzle, guess) do
@@ -58,7 +60,11 @@ defmodule Subtle.Puzzle do
   Returns true if we haven't exceeded the maximum guesses
   """
   def guesses_remaining?(puzzle) do
-    Enum.count(puzzle.guesses) < @max_guesses
+    Enum.count(puzzle.guesses) < puzzle.max_guesses
+  end
+
+  def guesses_remaining(puzzle) do
+    puzzle.max_guesses - Enum.count(puzzle.guesses)
   end
 
   @doc"""
@@ -66,7 +72,28 @@ defmodule Subtle.Puzzle do
   have @max_guesses
   """
   def last_guess?(puzzle) do
-    Enum.count(puzzle.guesses) >= (@max_guesses - 1)
+    Enum.count(puzzle.guesses) >= (puzzle.max_guesses - 1)
+  end
+
+  @doc"""
+  Returns a list of guesses, padded with empty guesses
+  """
+  def normalized_guesses(puzzle) do
+    Enum.concat(puzzle.guesses, empty_guesses(puzzle))
+  end
+
+  def empty_guesses(puzzle) do
+    Enum.reduce(1..Puzzle.guesses_remaining(puzzle),
+      [], fn _i, acc -> [empty_guess(puzzle) | acc] end)
+  end
+
+  def empty_guess(puzzle) do
+    answer_letters = String.graphemes(puzzle.answer)
+    results = Enum.reduce(
+      answer_letters, [],
+      fn _x, acc -> [{" ", :none} | acc] end)
+    %Guess{guess: String.duplicate(" ", Enum.count(answer_letters)),
+      results: results}
   end
 
   @doc """
@@ -98,7 +125,7 @@ defmodule Subtle.Puzzle do
       Enum.reduce(puzzle.guesses, "[",
         fn %Guess{} = guess,
           acc -> acc <> guess_summary(guess.results) <> ", " end)
-    String.replace_trailing(summary, ", ", "]")
+    String.replace_suffix(summary, ", ", "") <> "]"
   end
   defp guess_summary(results) do
     Enum.reduce(results, "",
