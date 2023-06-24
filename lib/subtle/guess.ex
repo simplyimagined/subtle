@@ -12,6 +12,19 @@ defmodule Subtle.Guess do
     %Guess{guess: guess, results: results}
   end
 
+  @doc"""
+  Return an empty guess for the answer.
+  This can be used to fill a partial puzzle.
+  """
+  def empty_guess(answer) when is_binary(answer) do
+    len = Enum.count(String.graphemes(answer))
+    guess = new(String.duplicate(" ", len),
+      List.duplicate({" ", :none}, len))
+
+    {:ok, guess}
+  end
+  def empty_guess(_answer), do: {:error, :invalid_arguments}
+
 #I have no idea how to typedef what I want, so dynamic it is!
  # @letter_position [:correct, :wrong_position, :wrong_letter, :none]
 
