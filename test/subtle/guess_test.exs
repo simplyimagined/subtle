@@ -122,4 +122,26 @@ defmodule Subtle.GuessTest do
         {:error, :invalid_arguments}
     end
   end
+
+  describe "empty_guess/1" do
+    test "return empty for paper" do
+      assert Guess.empty_guess("paper") ==
+        {:ok,
+          %Subtle.Guess{
+            guess: "     ",
+            results: [
+              {" ", :none},
+              {" ", :none},
+              {" ", :none},
+              {" ", :none},
+              {" ", :none}
+            ]
+          }}
+    end
+
+    test "invalid inputs" do
+      assert Guess.empty_guess(100) ==
+        {:error, :invalid_arguments}
+    end
+  end
 end
