@@ -17,7 +17,9 @@ defmodule Subtle.Application do
       # Start Finch
       {Finch, name: Subtle.Finch},
       # Start the Endpoint (http/https)
-      SubtleWeb.Endpoint
+      SubtleWeb.Endpoint,
+      # Start the PuzzleDictionary (one copy in memory)
+      Subtle.PuzzleDictionary
       # Start a worker by calling: Subtle.Worker.start_link(arg)
       # {Subtle.Worker, arg}
     ]
