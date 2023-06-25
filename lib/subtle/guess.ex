@@ -164,9 +164,10 @@ defmodule Subtle.Guess do
   def letter_counts(word) do
     word
     |> String.graphemes()
-    |> Enum.reduce(%{}, fn char, acc ->
-          Map.put(acc, char, (acc[char] || 0) + 1)
-        end)
+    |> Enum.frequencies()
+#    |> Enum.reduce(%{}, fn char, acc ->
+#          Map.put(acc, char, (acc[char] || 0) + 1)
+#        end)
   end
 
    @doc """
