@@ -110,15 +110,45 @@ defmodule Subtle.Guess do
     answer_letters = String.graphemes(answer)
     guess_letters = String.graphemes(guess)
 
-    {answers, _counts} =
+    {answers, counts} =
       Enum.zip(guess_letters, answer_letters)
       |> Enum.map_reduce(letter_counts(answer),
           fn pair, counts -> process_letter_pair(pair, counts) end)
 
+    # If we see a correct letter in the wrong position before the
+    # correct postion we can incorrectly mark it as :wrong_position.
+    # In the case of "rigid" for "strip" the first 'i' gets marked as
+    # :wrong_position when it should be :wrong_letter.
+    #
+    # Go through the answers, removing underflows
+    # "rigid" for "strip", first 'i' should be :wrong_letter
+    {adjusted, _adjusted_counts} =
+      Enum.map_reduce(answers, counts,
+        fn letter_result, counts ->
+          remove_underflows(letter_result, counts) end)
+
+#    IO.puts("adjusted:")
+#    IO.inspect(adjusted)
+
     # return only the answers, not the counts
-    answers
+    adjusted
   end
   def compare_letters(answer), do: compare_letters(answer, answer)
+
+  # Any :wrong_position tuple with an underflow will be changed
+  # to :wrong_letter and the counts adjusted
+  @doc false
+  def remove_underflows({letter, :wrong_position} = letter_position, counts) do
+    count = Map.get(counts, letter)
+    if count < 0 do
+      {{letter, :wrong_letter}, Map.put(counts, letter, count + 1)}
+    else
+      {letter_position, counts}
+    end
+  end
+  def remove_underflows(letter_position, counts) do
+    {letter_position, counts}
+  end
 
   @doc """
   process_letter_pair/2
@@ -187,6 +217,7 @@ defmodule Subtle.Guess do
       Map.put(acc, letter, adjust_count(letter, reduced_letter, count)) end)
   end
 
-  defp adjust_count(a, b, count) when a == b and count > 0, do: count - 1
+#  defp adjust_count(a, b, count) when a == b and count > 0, do: count - 1
+  defp adjust_count(a, b, count) when a == b, do: count - 1
   defp adjust_count(_a, _b, count), do: count
 end

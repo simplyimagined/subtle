@@ -33,7 +33,7 @@ defmodule Subtle.GuessTest do
         Guess.reduce_letter_count(pizza_counts, "z")
         |> Guess.reduce_letter_count("z")
         |> Guess.reduce_letter_count("z")
-      assert new_counts == %{"a" => 1, "i" => 1, "p" => 1, "z" => 0}
+      assert new_counts == %{"a" => 1, "i" => 1, "p" => 1, "z" => -1}
     end
   end
 
@@ -73,10 +73,22 @@ defmodule Subtle.GuessTest do
       assert Guess.compare_letters("apple", "tuple") ==
         [
           {"a", :wrong_letter},
-          {"p", :wrong_position},
+          {"p", :wrong_letter},
           {"p", :correct},
           {"l", :correct},
           {"e", :correct}
+        ]
+    end
+
+    # previously this inccorrectly marked the first i as :wrong_position
+    test "compare rigid and strip" do
+      assert Guess.compare_letters("rigid", "strip") ==
+        [
+          {"r", :wrong_position},
+          {"i", :wrong_letter},
+          {"g", :wrong_letter},
+          {"i", :correct},
+          {"d", :wrong_letter}
         ]
     end
   end
