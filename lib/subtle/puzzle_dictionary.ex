@@ -1,7 +1,8 @@
 defmodule Subtle.PuzzleDictionary do
   use Agent
 
-  @dict_filename "/puzzle_files/puzzle_words.txt"
+#  @dict_filename "/puzzle_files/puzzle_words.txt"
+  @dict_filename "/puzzle_files/dictionary.txt"
 
   # Fire up the Agent and store the dictionary in it
   @doc false
@@ -21,7 +22,7 @@ defmodule Subtle.PuzzleDictionary do
   end
 
   @doc"""
-  Check that a word is in the dictionary
+  Verifies that a word is in the dictionary.
 
   ### Examples
 
