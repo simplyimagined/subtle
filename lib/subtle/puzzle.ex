@@ -3,29 +3,97 @@ defmodule Subtle.Puzzle do
   Subtle is a Wordle clone for me to learn Elixir
   """
 
-  alias Subtle.{Puzzle, Guess}
+  alias Subtle.{Puzzle, Guess, PuzzleDictionary}
 
-  @max_guesses 6
+  # don't change word length since we only have 5 letter words in dict
   @word_length 5
+  @max_guesses 6
+  @verify_guesses true
 
   @enforce_keys [:state, :answer, :guesses]
   defstruct [
     state: :playing,
-    answer: "",
-    message: "",
+    verify_guesses: @verify_guesses,
     word_length: @word_length,
     max_guesses: @max_guesses,
+    answer: "",
+    message: "",
     guesses: []
   ]
 
   def new() do
-    Puzzle.new(random_puzzle_word())
+    Puzzle.new(PuzzleDictionary.random_word())
   end
   def new(answer) do
     %Puzzle{state: :playing,
-              answer: answer, word_length: @word_length,
+              verify_guesses: @verify_guesses,
+              word_length: @word_length,
+              max_guesses: @max_guesses,
+              answer: answer,
               message: "Guess a word.",
-              max_guesses: @max_guesses, guesses: []}
+              guesses: []}
+  end
+
+  def set_rules(puzzle, opts) when is_list(opts) do
+    word_length = Keyword.get(opts, :word_length, @word_length)
+    max_guesses = Keyword.get(opts, :max_guesses, @max_guesses)
+    verify_guesses = Keyword.get(opts, :verify_guesses, @verify_guesses)
+
+    puzzle
+    |> Map.put(:word_length, word_length)
+    |> Map.put(:max_guesses, max_guesses)
+    |> Map.put(:verify_guesses, verify_guesses)
+  end
+
+  @doc"""
+  Verify that a guess meets the rules.
+  Possible return values:
+      # Isn't a string
+      {:error, puzzle, :invalid_arguments}
+
+      # length is wrong
+      {:error, puzzle, :invalid_length}
+
+      # game state isn't :playing
+      {:error, puzzle, :game_over}
+
+      # word not in our game dictionary
+      {:error, puzzle, :invalid_word}
+
+      # all is well
+      {:ok, puzzle}
+  """
+  def verify_guess(%Puzzle{state: :playing} = puzzle, guess) do
+    # check is string
+    # check length
+    # check game status
+    # verify word in dict
+    with  true <- is_binary(guess),
+          true <- verify_guess_length(guess),
+          {:dict, true} <- {:dict, PuzzleDictionary.verify_word(guess)}
+    do
+      {:ok, puzzle}
+    else
+      false -> {:error, puzzle, :invalid_arguments}
+      {:error, :invalid_length} ->
+          {:error,
+            change_message(puzzle, "Guess must be #{puzzle.word_length} letters."),
+            :invalid_length}
+      {:dict, false} ->
+          {:error,
+            change_message(puzzle, "Your guess must be in the dictionary."),
+            :invalid_word}
+
+      {:error, _} -> {:error, puzzle, :baby_dont_hurt_me}
+    end
+  end
+  def verify_guess(puzzle, _), do: {:error, puzzle, :game_over}
+
+
+  def verify_guess_length(guess) do
+    if (Enum.count(String.graphemes(guess)) == @word_length),
+      do: true,
+      else: {:error, :invalid_length}
   end
 
   def make_guess(%Puzzle{state: :playing} = puzzle, guess) do
@@ -90,6 +158,9 @@ defmodule Subtle.Puzzle do
     Enum.count(puzzle.guesses) < puzzle.max_guesses
   end
 
+  @doc"""
+  Returns the number of guesses remaining.
+  """
   def guesses_remaining(puzzle) do
     puzzle.max_guesses - Enum.count(puzzle.guesses)
   end
@@ -158,28 +229,6 @@ defmodule Subtle.Puzzle do
       :wrong_letter -> "!" <> letter
       _ -> "."
     end
-  end
-
-  @doc """
-  Get a random word from our list of puzzle words.
-
-  ### Examples
-
-      iex> Puzzle.random_puzzle_word()
-      # "paper"
-
-  """
-  def random_puzzle_word() do
-    puzzle_words()
-    |> Enum.random()
-  end
-
-  # Ideally we would cache this, but for now it's simple and blazing fast
-  def puzzle_words() do
-    :code.priv_dir(:subtle)
-    |> Path.join("/puzzle_files/puzzle_words.txt")
-    |> File.read!()
-    |> String.split("\n")
   end
 
 end
