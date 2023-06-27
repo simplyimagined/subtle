@@ -17,9 +17,10 @@ defmodule SubtleWeb.Router do
   scope "/", SubtleWeb do
     pipe_through :browser
 
-    get "/", PageController, :home
+#    get "/", PageController, :home
 
-    live "/subtle", SubtleLive
+#    live "/subtle", SubtleLive
+    live "/", SubtleLive
   end
 
   # Other scopes may use custom stacks.
