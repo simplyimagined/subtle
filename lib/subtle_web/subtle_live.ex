@@ -19,9 +19,6 @@ defmodule SubtleWeb.SubtleLive do
   end
 
   def render(assigns) do
-#    <.simple_form for={@form} id="guess_form" phx-change="validate" phx-submit="guess">
-#IO.puts("render.assigns")
-#IO.inspect(assigns)
     ~H"""
     <h2 class="text-2xl text-zinc-200 py-6">
       <%= @message %>
@@ -30,76 +27,59 @@ defmodule SubtleWeb.SubtleLive do
     <div class="grid grid-flow-row gap-y-6">
       <div class="flex rounded-lg p-4 bg-slate-700/50">
         <%= if @puzzle.state == :playing do %>
-          <.guess_form for={@form} message={@puzzle.message} id="guess_form" phx-submit="guess" />
+          <.guess_form message={@puzzle.message} />
         <% else %>
-          <.game_over puzzle={@puzzle} />
+          <.game_over message={@puzzle.message} answer={@puzzle.answer} />
         <% end %>
       </div>
 
       <%= render_guesses(assigns) %>
       <%= render_legend(assigns) %>
     </div>
-    <p class="mt-40 text-zinc-200"> <%= Puzzle.summary @puzzle %> </p>
+    <p class="mt-50 text-zinc-200"> <%= Puzzle.summary @puzzle %> </p>
     """
-#    <.input field={@form[:guess]} label="Guess" />
-#    <label class="block text-lg font-medium text-zinc-200">
-#      <%= @puzzle.message %>
-##    </label>
-#   <:actions>
-#      <.button>Guess</.button>
-#    </:actions>
-#  </.guess_form>
 end
 
-  @doc"""
-  bleh
-  attr :for, :any, required: true, doc: "the datastructure for the form"
-  attr :as, :any, default: nil, doc: "the server side parameter to collect all input under"
-
-  attr :rest, :global,
-    include: ~w(autocomplete name rel action enctype method novalidate target),
-    doc: "the arbitrary HTML attributes to apply to the form tag"
-
-  slot :inner_block, required: true
-  slot :actions, doc: "the slot for form actions, such as a submit button"
-  """
-  # message: "Guess a word", "You won!"
-  #
-  attr :for, :any, required: true, doc: "the datastructure for the form"
-  attr :as, :any, default: nil, doc: "the server side parameter to collect all input under"
   attr :message, :string, default: ""
-
-  attr :rest, :global,
-    include: ~w(autocomplete name rel action enctype method novalidate target),
-    doc: "the arbitrary HTML attributes to apply to the form tag"
+  attr :value, :string, default: ""
+  attr :errors, :list, default: []
 
   def guess_form(assigns) do
 #    IO.puts("guess_form.assigns")
 #    IO.inspect(assigns)
     ~H"""
-    <.form :let={f} for={@for} as={@as} {@rest}>
+    <form id="guess_form" phx-submit="guess">
       <div class="p-4 space-y-4">
         <div class="flex space-x-4 auto-rows-max items-center">
-          <.input field={@for[:guess]} />
+          <input type="text" name="guess"
+            value={Phoenix.HTML.Form.normalize_value("text", @value)}
+            class={[
+              "mt-2 block w-full rounded-lg text-zinc-900 focus:ring-0 sm:text-sm sm:leading-6",
+              "phx-no-feedback:border-zinc-300 phx-no-feedback:focus:border-zinc-400",
+              "border-zinc-300 focus:border-zinc-400",
+              @errors != [] && "border-rose-400 focus:border-rose-400"
+            ]}
+          />
           <.button>Guess</.button>
         </div>
         <label class="block text-lg font-medium text-zinc-200">
           <%= @message %>
         </label>
       </div>
-    </.form>
+    </form>
     """
   end
 
-  attr :puzzle, :any
+  attr :message, :string, required: true
+  attr :answer, :string, required: true
 
   def game_over(assigns) do
     ~H"""
     <div class="flex items-center space-x-10">
       <p class="text-2xl text-zinc-200">
-        <%= @puzzle.message <> "  The word was " <> @puzzle.answer <> "." %>
+        <%= @message <> "  The word was " <> @answer <> "." %>
       </p>
-      <.button phx-click="new game">New Game</.button>
+      <.button phx-click="new_game">New Game</.button>
     </div>
     """
   end
@@ -124,12 +104,13 @@ end
   def render_guess(assigns) do
 #    IO.inspect(assigns)
     ~H"""
-    <div class="grid grid-cols-5 gap-x-4">
+    <div class="guessrow">
       <%= for {letter, hint} = _result <- @results do %>
         <.letter_box letter={letter} hint={hint}/>
       <% end %>
     </div>
     """
+#    <div class="grid grid-cols-5 gap-x-4">
   end
 
 
@@ -139,19 +120,21 @@ end
   def letter_box(assigns) do
   #  IO.inspect(assigns)
     ~H"""
-    <p class={[
-      "w-14 h-14 justify-center items-baseline py-3 px-5",
-      "text-3xl font-semibold text-zinc-200",
-      if(@hint == :correct, do: "bg-green-600"),
-      if(@hint == :wrong_letter, do: "bg-red-600"),
-      if(@hint == :wrong_position, do: "bg-yellow-400"),
-      if(@hint == :none, do: "bg-sky-500"),
-      "rounded-lg border-2 border-zinc-200"
-      ]}
-    >
-      <%= String.replace_prefix(@letter, " ", "&nbsp;") |> raw() %>
-    </p>
+    <div class="letterbox">
+      <p class={letter_box_class(@hint)}>
+        <%= String.replace_prefix(@letter, " ", "&nbsp;") |> raw() %>
+      </p>
+    </div>
     """
+  end
+
+  defp letter_box_class(box_type) do
+    case box_type do
+      :correct -> "correct"
+      :wrong_letter -> "wrong_letter"
+      :wrong_position -> "wrong_position"
+      :none -> "none"
+    end
   end
 
   def render_legend(assigns) do
@@ -208,8 +191,9 @@ end
 #      end
   end
 
-  def handle_event("new game", _params, socket) do
+  def handle_event("new_game", _params, socket) do
 #    {:noreply, push_patch(socket, to: ~p"/subtle/?new_game=true")}
-    {:noreply, push_patch(socket, to: ~p"/?new_game=true")}
+#    {:noreply, push_patch(socket, to: ~p"/?new_game=true")}
+    {:noreply, assign(socket, puzzle: Puzzle.new())}
   end
 end
