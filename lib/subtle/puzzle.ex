@@ -81,7 +81,7 @@ defmodule Subtle.Puzzle do
             :invalid_length}
       {:dict, false} ->
           {:error,
-            change_message(puzzle, "Your guess must be in the dictionary."),
+            change_message(puzzle, "Your guess, \"#{guess}\", must be in the dictionary."),
             :invalid_word}
 
       {:error, _} -> {:error, puzzle, :baby_dont_hurt_me}
