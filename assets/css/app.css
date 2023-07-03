@@ -39,22 +39,33 @@
   
 
   div .guessrow {
-    @apply grid grid-cols-5 gap-x-4 max-w-xl mx-auto text-center;
+    @apply grid grid-cols-5 gap-x-4 max-w-xl mx-auto;
   }
 
-  div .letterbox p {
-    @apply w-14 h-14 justify-center items-baseline py-3 px-5 text-3xl font-semibold text-zinc-200 rounded-lg border-2 border-zinc-200;
+  div .guessbox p {
+    @apply w-14 h-14 text-3xl p-2 font-semibold text-center text-zinc-200 rounded-lg border-2 border-zinc-200;
   }
-  div .letterbox p.correct {
+  div .keybox p {
+    @apply w-8 h-8 text-xl font-semibold text-center items-baseline text-zinc-200 rounded-lg border-2 border-zinc-200;
+  }
+  div .guessbox p.correct,
+  div .keybox p.correct {
     @apply bg-green-600;
   }
-  div .letterbox p.wrong_letter {
+  div .guessbox p.wrong_letter,
+  div .keybox p.wrong_letter {
     @apply bg-red-600;
   }
-  div .letterbox p.wrong_position {
+  div .guessbox p.wrong_position,
+  div .keybox p.wrong_position {
     @apply bg-yellow-400;
   }
-  div .letterbox p.none {
+  div .guessbox p.unused,
+  div .keybox p.unused {
+    @apply bg-slate-800;
+  }
+  div .guessbox p.none,
+  div .keybox p.none {
     @apply bg-sky-500;
   }
 
