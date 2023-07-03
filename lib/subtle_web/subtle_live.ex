@@ -2,6 +2,7 @@ defmodule SubtleWeb.SubtleLive do
   use SubtleWeb, :live_view
   use Phoenix.Component
   alias Subtle.{Game, Puzzle}
+  alias SubtleWeb.SubtleComponents
 
   def mount(_params, session, socket) do
 #    puzzle = Puzzle.new()
@@ -110,34 +111,10 @@ defmodule SubtleWeb.SubtleLive do
     ~H"""
     <div class="guessrow">
       <%= for {letter, hint} = _result <- @results do %>
-        <.letter_box letter={letter} hint={hint}/>
+        <SubtleComponents.letter_box kind={:guess} letter={letter} hint={hint}/>
       <% end %>
     </div>
     """
-  end
-
-
-  attr :letter, :string, required: true
-  attr :hint, :atom, default: :none
-
-  def letter_box(assigns) do
-  #  IO.inspect(assigns)
-    ~H"""
-    <div class="letterbox">
-      <p class={letter_box_class(@hint)}>
-        <%= String.replace_prefix(@letter, " ", "&nbsp;") |> raw() %>
-      </p>
-    </div>
-    """
-  end
-
-  defp letter_box_class(box_type) do
-    case box_type do
-      :correct -> "correct"
-      :wrong_letter -> "wrong_letter"
-      :wrong_position -> "wrong_position"
-      :none -> "none"
-    end
   end
 
   def render_legend(assigns) do
@@ -154,7 +131,7 @@ defmodule SubtleWeb.SubtleLive do
   def render_legend_key(assigns) do
     ~H"""
     <div class="flex justify-after items-center space-x-4">
-      <.letter_box letter={@letter} hint={@hint}/>
+      <SubtleComponents.letter_box kind={:key} letter={@letter} hint={@hint}/>
       <p class="text-left text-xl font-medium text-zinc-200">
         <%= @description %>
       </p>
