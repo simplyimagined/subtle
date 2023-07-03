@@ -99,6 +99,7 @@ defmodule SubtleWeb.SubtleLive do
           <%= render_guess guess %>
         <% end %>
         <p class="text-zinc-200"> <%= Game.guesses_remaining(@game) %> guesses remaining </p>
+        <SubtleComponents.show_letters_used letters={Game.letters_used(@game)} />
       </div>
     </div>
     """

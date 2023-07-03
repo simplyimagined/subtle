@@ -37,4 +37,39 @@ defmodule SubtleWeb.SubtleComponents do
     end
   end
 
+  attr :letters, :map, required: true
+
+  def show_letters_used(assigns) do
+    ~H"""
+    <div class="flex rounded-lg p-2 bg-slate-700/20 grid grid-flow-row auto-rows-min gap-y-2">
+      <.letter_row keys={~w[q w e r t y u i o p]} letters={@letters} />
+      <.letter_row keys={~w[a s d f g h j k l]} leading={2} letters={@letters} />
+      <.letter_row keys={~w[z x c v b n m]} leading={4} letters={@letters} />
+    </div>
+    """
+  end
+
+  attr :keys, :list, required: true
+  attr :letters, :map, required: true
+  attr :leading, :integer, default: 0
+
+  def letter_row(assigns) do
+    ~H"""
+    <div class="pl-{@leading} grid grid-flow-col justify-start gap-x-2">
+      <%= for key <- @keys do %>
+        <.letter_box kind={:key} letter={key} hint={hint_for_key(@letters, key)} />
+      <% end %>
+    </div>
+    """
+  end
+
+  defp hint_for_key(letters, key) do
+    hints = Map.get(letters, key, [:unused])
+    cond do
+      :wrong_position in hints -> :wrong_position
+      :correct in hints -> :correct
+      :wrong_letter in hints -> :wrong_letter
+      true -> :unused
+    end
+  end
 end
