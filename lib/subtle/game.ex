@@ -1,51 +1,51 @@
 defmodule Subtle.Game do
-  use GenServer
 
-  alias Subtle.Game
-  alias Subtle.Puzzle
+  alias Subtle.{Game, Puzzle, PuzzleDictionary}
 
-  # Client
+  @verify_guesses true
 
-  def start_link(default) do
-    GenServer.start_link(Game, default)
+  @enforce_keys [:puzzle]
+  defstruct [
+    verify_guesses: @verify_guesses,
+    puzzle: %{},
+    message: ""
+  ]
+
+  def new() do
+    Game.new(PuzzleDictionary.random_word())
   end
+  def new(answer) do
+    %Game{
+      verify_guesses: @verify_guesses,
+      puzzle: Puzzle.new(answer),
+      message: "Guess a word."
+    }
+  end
+
+  def message(game), do: game.message
+
+  def state(game), do: game.puzzle.state
+  def answer(game), do: game.puzzle.answer
+  def guesses_remaining(game), do: Puzzle.guesses_remaining(game.puzzle)
+  def summary(game), do: Puzzle.summary(game.puzzle)
+
+  def guesses(game), do: Puzzle.normalized_guesses(game.puzzle)
 
   def make_guess(game, guess) do
-    GenServer.call(game, {:make_guess, guess})
-  end
+    guess = String.downcase(guess)
 
-  def get_puzzle(game) do
-    GenServer.call(game, :get_puzzle)
-  end
-
-  def reset_puzzle(game, answer \\ "") do
-    GenServer.call(game, {:reset_puzzle, answer})
-  end
-
-  # Server (callbacks)
-
-  @impl true
-  def init(_default) do
-    {:ok, Puzzle.new()}
-  end
-
-  @impl true
-  def handle_call({:reset_puzzle, answer}, _from, _state) do
-    puzzle = Puzzle.new(answer)
-    {:noreply, puzzle, puzzle}
-  end
-
-  def handle_call({:make_guess, guess}, _from, puzzle) do
-    IO.inspect(guess)
-    case Puzzle.make_guess(puzzle, guess) do
-      {:ok, modified_puzzle} ->
-        {:noreply, {:ok, modified_puzzle}, modified_puzzle}
-      {:error, puzzle, reason} ->
-        {:noreply, {:error, puzzle, reason}, puzzle}
+    with  {:ok, _puzzle} <- Puzzle.verify_guess(game.puzzle, guess),
+          {:ok, puzzle} <- Puzzle.make_guess(game.puzzle, guess)
+    do
+      {:ok, game
+            |> Map.put(:puzzle, puzzle)
+            |> Map.put(:message, puzzle.message)}
+    else
+      {:error, puzzle, _reason} ->
+        {:error, game
+                  |> Map.put(:puzzle, puzzle)
+                  |> Map.put(:message, puzzle.message)}
     end
   end
 
-  def handle_call(:get_puzzle, _from, puzzle) do
-    {:reply, puzzle, puzzle}
-  end
 end

@@ -25,7 +25,7 @@ defmodule Subtle.Puzzle do
     Puzzle.new(PuzzleDictionary.random_word())
   end
   def new(answer) do
-    %Puzzle{state: :playing,
+    %Puzzle{  state: :playing,
               verify_guesses: @verify_guesses,
               word_length: @word_length,
               max_guesses: @max_guesses,

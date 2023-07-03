@@ -1,32 +1,23 @@
 defmodule SubtleWeb.SubtleLive do
   use SubtleWeb, :live_view
   use Phoenix.Component
-  alias Subtle.Puzzle
+  alias Subtle.{Game, Puzzle}
 
   def mount(_params, session, socket) do
-    puzzle = Puzzle.new()
+#    puzzle = Puzzle.new()
 #    puzzle = Puzzle.new("paper")
 #    {:ok, puzzle} = Puzzle.make_guess(puzzle, "apple")
 #    {:ok, puzzle} = Puzzle.make_guess(puzzle, "poppy")
-    form = to_form(%{"guess" => ""})
 
     {:ok, assign(socket,
                   page_title: "Subtle",
                   session_id: session["live_socket_id"],
-                  puzzle: puzzle,
-                  message: "Subtle",
-                  show_settings: false,
-                  form: form )}
+                  game: Game.new(),
+                  message: "Subtle"
+                )}
   end
 
   def render(assigns) do
-#    <div class="absolute top-6 right-5">
-#    <Heroicons.cake solid class="w-2 h-2" />
-#      <button phx-click="settings">
-#        <.icon name="hero-cog-6-tooth" class="w-6 h-6 bg-zinc-200" />
-#      </button>
-#    </div>
-
     ~H"""
     <h2 class="text-2xl text-zinc-200 mb-4">
       <%= @message %>
@@ -39,19 +30,19 @@ defmodule SubtleWeb.SubtleLive do
            <p>Inner Modal Content</p>
         </.modal>
 
-        <%= if @puzzle.state == :playing do %>
-          <.guess_form message={@puzzle.message} />
+        <%= if Game.state(@game) == :playing do %>
+          <.guess_form message={Game.message(@game)} />
         <% else %>
-          <.game_over message={@puzzle.message} answer={@puzzle.answer} />
+          <.game_over message={Game.message(@game)} answer={Game.answer(@game)} />
         <% end %>
       </div>
 
       <%= render_guesses(assigns) %>
       <%= render_legend(assigns) %>
     </div>
-    <p class="mt-50 text-zinc-200"> <%= Puzzle.summary @puzzle %> </p>
+    <p class="mt-50 text-zinc-200"> <%= Game.summary @game %> </p>
     """
-end
+  end
 
   attr :message, :string, default: ""
   attr :value, :string, default: ""
@@ -97,16 +88,16 @@ end
     """
   end
 
-  attr :puzzle, :map, required: true
+  attr :game, :map, required: true
   def render_guesses(assigns) do
 #    IO.inspect(Puzzle.normalized_guesses(assigns.puzzle))
     ~H"""
     <div class="flex rounded-lg p-4 bg-slate-700/50">
       <div class="grid grid-flow-row auto-rows-max gap-y-4">
-        <%= for guess <- Puzzle.normalized_guesses(@puzzle) do %>
+        <%= for guess <- Game.guesses(@game) do %>
           <%= render_guess guess %>
         <% end %>
-        <p class="text-zinc-200"> <%= Puzzle.guesses_remaining(@puzzle) %> guesses remaining </p>
+        <p class="text-zinc-200"> <%= Game.guesses_remaining(@game) %> guesses remaining </p>
       </div>
     </div>
     """
@@ -123,7 +114,6 @@ end
       <% end %>
     </div>
     """
-#    <div class="grid grid-cols-5 gap-x-4">
   end
 
 
@@ -172,46 +162,20 @@ end
     """
   end
 
-  def handle_params(params, _uri, socket) do
-    IO.inspect(params)
-    socket =
-      case params["new_game"] do
-        "true" -> assign(socket, puzzle: Puzzle.new())
-        _ -> socket
-      end
-
-    {:noreply, socket}
-  end
-
   def handle_event("guess", %{"guess" => guess}, socket) do
     IO.inspect(guess)
-    # lowercase
     guess = String.downcase(guess)
-    with {:ok, _puzzle} <- Puzzle.verify_guess(socket.assigns.puzzle, guess),
-          {:ok, puzzle} <- Puzzle.make_guess(socket.assigns.puzzle, guess)
-    do
-      {:noreply, assign(socket, puzzle: puzzle)}
+    with {:ok, game} <- Game.make_guess(socket.assigns.game, guess) do
+      {:noreply, assign(socket, game: game)}
     else
-      {:error, puzzle, _reason} ->
-          {:noreply, assign(socket, puzzle: puzzle)}
+      # opportunity to set some error assigns
+      {:error, game} ->
+        {:noreply, assign(socket, game: game)}
     end
-#    case Puzzle.make_guess(socket.assigns.puzzle, guess) do
-#      {:ok, %{state: :correct} = puzzle} ->
-#      {:ok, puzzle} ->
-#        {:noreply, assign(socket, puzzle: puzzle)}
-#      {:error, puzzle, _reason} ->
-#        {:noreply, assign(socket, puzzle: puzzle)}
-#      end
   end
 
   def handle_event("new_game", _params, socket) do
-#    {:noreply, push_patch(socket, to: ~p"/subtle/?new_game=true")}
-#    {:noreply, push_patch(socket, to: ~p"/?new_game=true")}
-    {:noreply, assign(socket, puzzle: Puzzle.new())}
-  end
-
-  def handle_event("settings", _params, socket) do
-    {:noreply, assign(socket, show_settings: true)}
+    {:noreply, assign(socket, game: Game.new())}
   end
 
 end
