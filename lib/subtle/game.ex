@@ -48,4 +48,25 @@ defmodule Subtle.Game do
     end
   end
 
+  def letters_used(game) do
+    # 1) Go through all the letters already guessed
+    # 2) Create a map with results for each letter guessed
+    # [{"b", :correct}, {"c", :wrong_letter}, {"b", :wrong_position}] ->
+    # %{"b" => [:correct, :wrong_position]}, "c" => [:wrong_letter]}
+    game.puzzle.guesses
+    |> Enum.reduce([], fn x, acc -> [x.results | acc] end)
+    |> List.flatten()
+    |> reduce_letters()
+  end
+
+  def reduce_letters(l) do
+    # This is similar to frequencies() but accumulating results, not count
+    Enum.reduce(l, %{}, fn {letter, result}, map ->
+      case map do
+        %{^letter => value} -> %{map | letter => [result | value]}
+        %{} -> Map.put(map, letter, [result])
+      end
+    end)
+  end
+
 end
