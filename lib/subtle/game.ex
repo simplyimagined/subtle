@@ -22,6 +22,10 @@ defmodule Subtle.Game do
     }
   end
 
+  def set_verify(game, verify) do
+    Map.put(game, :verify_guesses, verify)
+  end
+
   def message(game), do: game.message
 
   def state(game), do: game.puzzle.state
@@ -31,10 +35,17 @@ defmodule Subtle.Game do
 
   def guesses(game), do: Puzzle.normalized_guesses(game.puzzle)
 
+  def verify_guess(game, guess) do
+    case game.verify_guesses do
+      true -> Puzzle.verify_guess(game.puzzle, guess)
+      false -> {:ok, game.puzzle}
+    end
+  end
+
   def make_guess(game, guess) do
     guess = String.downcase(guess)
 
-    with  {:ok, _puzzle} <- Puzzle.verify_guess(game.puzzle, guess),
+    with  {:ok, _puzzle} <- verify_guess(game, guess),
           {:ok, puzzle} <- Puzzle.make_guess(game.puzzle, guess)
     do
       {:ok, game
