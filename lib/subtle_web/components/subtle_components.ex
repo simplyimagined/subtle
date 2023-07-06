@@ -55,12 +55,13 @@ defmodule SubtleWeb.SubtleComponents do
 
   def letter_row(assigns) do
     ~H"""
-    <div class="pl-{@leading} grid grid-flow-col justify-start gap-x-2">
+    <div class="grid grid-flow-col justify-start gap-x-1 md:gap-x-2">
       <%= for key <- @keys do %>
         <.letter_box kind={:key} letter={key} hint={hint_for_key(@letters, key)} />
       <% end %>
     </div>
     """
+#    <div class={"grid grid-flow-col justify-start gap-x-2 ms-" <> to_string(@leading)}>
   end
 
   defp hint_for_key(letters, key) do
