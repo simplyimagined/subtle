@@ -59,6 +59,13 @@ defmodule Subtle.Game do
     end
   end
 
+  # This won't work correctly. Ideally, we want to show letters that are in
+  # correct position, but we also need to show letter not in position.
+  # We need to do that without giving hints away, unless they uncovered it.
+  # Then we need to show used letters.
+  #
+  # Maybe for now all used letters get marked?
+  # ie, :wrong_letter and :in_puzzle, let them figure it out
   def letters_used(game) do
     # 1) Go through all the letters already guessed
     # 2) Create a map with results for each letter guessed
