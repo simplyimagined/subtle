@@ -60,6 +60,10 @@
   div .keybox p.wrong_position {
     @apply bg-yellow-400;
   }
+  div .guessbox p.used,
+  div .keybox p.used {
+    @apply bg-slate-400;
+  }
   div .guessbox p.unused,
   div .keybox p.unused {
     @apply bg-slate-800;

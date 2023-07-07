@@ -99,7 +99,7 @@ defmodule SubtleWeb.SubtleLive do
     ~H"""
     <div class="flex items-center space-x-10">
       <p class="text-2xl text-zinc-200">
-        <%= @message <> "  The word was " <> @answer <> "." %>
+        <%= @message <> "  The word was \u201C" <> String.upcase(@answer) <> "\u201D." %>
       </p>
       <.button phx-click="new_game">New Game</.button>
     </div>
@@ -142,6 +142,8 @@ defmodule SubtleWeb.SubtleLive do
       <.render_legend_key letter="!" hint={:correct} description="Correct letter" />
       <.render_legend_key letter="?" hint={:wrong_position} description="Good letter, wrong location" />
       <.render_legend_key letter="x" hint={:wrong_letter} description="Letter not in puzzle" />
+      <.render_legend_key letter="x" hint={:used} description="Letter somewhere in puzzle" />
+      <.render_legend_key letter="x" hint={:unused} description="Letter not guessed yet" />
     </div>
     """
   end
@@ -163,8 +165,8 @@ defmodule SubtleWeb.SubtleLive do
       |> String.trim
       |> String.downcase
 
-#    verify = Map.get(params, "verify", false) == "true"
-    verify = !!Map.get(params, "verify", false) # !! hack gets us true/false
+    # !! hack gets us true/false from nil, "true"
+    verify = !!Map.get(params, "verify", false)
     game = %{socket.assigns.game | verify_guesses: verify}
 #    IO.inspect(guess, label: "guess")
 #    IO.inspect(verify, label: "verify")

@@ -6,7 +6,7 @@ defmodule SubtleWeb.SubtleComponents do
   alias Subtle.Game
 
   attr :letter, :string, required: true
-  attr :hint, :atom, values: [:correct, :wrong_letter, :wrong_position, :unused, :none], default: :none
+  attr :hint, :atom, values: [:correct, :wrong_letter, :wrong_position, :used, :unused, :none], default: :none
   attr :kind, :atom, values: [:guess, :key], required: true
 
   def letter_box(assigns) do
@@ -32,6 +32,7 @@ defmodule SubtleWeb.SubtleComponents do
       :correct -> "correct"
       :wrong_letter -> "wrong_letter"
       :wrong_position -> "wrong_position"
+      :used -> "used"
       :unused -> "unused"
       :none -> "none"
     end
@@ -67,8 +68,8 @@ defmodule SubtleWeb.SubtleComponents do
   defp hint_for_key(letters, key) do
     hints = Map.get(letters, key, [:unused])
     cond do
-      :wrong_position in hints -> :wrong_position
-      :correct in hints -> :correct
+      :wrong_position in hints -> :used  # :wrong_position
+      :correct in hints -> :used  # :correct
       :wrong_letter in hints -> :wrong_letter
       true -> :unused
     end
