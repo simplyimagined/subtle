@@ -1,24 +1,25 @@
 defmodule Subtle.PuzzleDictionary do
   use Agent
 
-#  @dict_filename "/puzzle_files/puzzle_words.txt"
-  @dict_filename "/puzzle_files/dictionary.txt"
+  @wordle_words "/puzzle_files/wordle_words.txt"
+  @large5_words "/puzzle_files/large5_words.txt"
+  @small5_words "/puzzle_files/small5_words.txt"
 
-  # Fire up the Agent and store the dictionary in it
+  # Fire up the Agent and store the dictionary map in it
   @doc false
   def start_link(_opts) do
-#    opts = Map.put_new(opts, :name, __MODULE__)
-#    IO.inspect(opts)
     Agent.start_link(
-      fn -> dict_words_from_file(@dict_filename) end,
+      fn -> dictionary_map_from_disk() end,
       name: __MODULE__)
   end
 
   @doc"""
   Pull the dictionary from our Agent's state
+  Valid keys include [:wordle, :large5, :small5]
   """
-  def dictionary() do
-    Agent.get(__MODULE__, fn dict -> dict end)
+  def dictionary(dict \\ :wordle) do
+    Agent.get(__MODULE__, fn dict_map -> dict_map end)
+    |> Map.get(dict)
   end
 
   @doc"""
@@ -32,8 +33,8 @@ defmodule Subtle.PuzzleDictionary do
       # false
 
   """
-  def verify_word(guess) do
-    dictionary()
+  def verify_word(guess, dict \\ :large5) do
+    dictionary(dict)
     |> Enum.member?(guess)
   end
 
@@ -46,9 +47,19 @@ defmodule Subtle.PuzzleDictionary do
       # "paper"
 
   """
-  def random_word() do
-    dictionary()
+  def random_word(dict \\ :wordle) do
+    dictionary(dict)
     |> Enum.random()
+  end
+
+  # Load both wordle and large5 dictionaries from the files
+  @doc false
+  def dictionary_map_from_disk do
+    %{
+      :wordle => dict_words_from_file(@wordle_words),
+      :large5 => dict_words_from_file(@large5_words),
+      :small5 => dict_words_from_file(@small5_words)
+     }
   end
 
   # Load a list of words from the file
@@ -58,21 +69,7 @@ defmodule Subtle.PuzzleDictionary do
     |> Path.join(filename)
     |> File.read!()
     |> String.split("\n")
+    |> Enum.map(fn w -> String.downcase(w) end)
   end
 
-# keeping this stream example for another day
-#
-#  {:ok, list_of_results} =
-#    Repo.transaction(
-#      fn ->
-#        an_ecto_query
-#        |> Repo.stream(max_rows: 1000)
-#        |> Stream.map(...)
-#        |> Stream.filter(...)
-#        |> Stream.flat_map(...)
-#        # etc. processing steps for each record
-#        |> Enum.to_list()
-#      end,
-#      timeout: :infinity
-#    )
 end
