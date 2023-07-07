@@ -1,7 +1,7 @@
 defmodule SubtleWeb.SubtleLive do
   use SubtleWeb, :live_view
   use Phoenix.Component
-  alias Subtle.{Game, Puzzle}
+  alias Subtle.Game
   alias SubtleWeb.SubtleComponents
 
   def mount(_params, session, socket) do

@@ -2,9 +2,6 @@ defmodule SubtleWeb.SubtleComponents do
   use Phoenix.Component
   use Phoenix.HTML
 
-  alias SubtleWeb.SubtleComponents
-  alias Subtle.Game
-
   attr :letter, :string, required: true
   attr :hint, :atom, values: [:correct, :wrong_letter, :wrong_position, :used, :unused, :none], default: :none
   attr :kind, :atom, values: [:guess, :key], required: true
