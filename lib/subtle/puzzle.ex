@@ -151,6 +151,13 @@ defmodule Subtle.Puzzle do
  #     guesses: List.insert_at(puzzle.guesses, -1, guess_result)}
  # end
 
+  @doc """
+  Returns true if they have taken at least one guess
+  """
+  def has_guessed?(puzzle) do
+    Enum.count(puzzle.guesses) > 0
+  end
+
   @doc"""
   Returns true if we haven't exceeded the maximum guesses
   """
