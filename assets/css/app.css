@@ -74,3 +74,34 @@
   }
 
 
+  div .legend {
+    @apply rounded-lg p-4 bg-slate-700/50 grid grid-flow-row auto-rows-min gap-y-2 gap-x-2;
+  }
+  div .legend h1 {
+    @apply col-span-2 text-xl font-medium text-zinc-300;
+  }
+  div .legend h2 {
+    @apply text-lg font-medium text-zinc-300;
+  }
+  div .legend_groups {
+    @apply rounded-lg p-4 bg-slate-700/50 grid grid-flow-col auto-cols-min gap-y-2 gap-x-2;
+  }
+  div .legend .legend_group {
+    @apply rounded-md p-2 bg-slate-700/50 grid grid-flow-row auto-rows-min gap-y-2;
+  }
+  div .legend .legend_key {
+    @apply grid grid-flow-col auto-cols-max items-center gap-x-2;
+  }
+  div .legend_key .desc {
+    @apply text-left text-base md:text-base font-medium text-zinc-300;
+  }
+
+  div .possible_words {
+    @apply flex rounded-lg p-4 bg-slate-700/50 items-baseline;
+  }
+  div .possible_words h1 {
+    @apply text-lg whitespace-nowrap font-medium text-zinc-200;
+  }
+  div .possible_words p {
+    @apply ml-2 text-base font-medium text-zinc-300;
+  }

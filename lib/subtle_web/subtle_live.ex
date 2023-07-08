@@ -5,11 +5,6 @@ defmodule SubtleWeb.SubtleLive do
   alias SubtleWeb.SubtleComponents
 
   def mount(_params, session, socket) do
-#    puzzle = Puzzle.new()
-#    puzzle = Puzzle.new("paper")
-#    {:ok, puzzle} = Puzzle.make_guess(puzzle, "apple")
-#    {:ok, puzzle} = Puzzle.make_guess(puzzle, "poppy")
-
     {:ok, assign(socket,
                   page_title: "Subtle",
                   session_id: session["live_socket_id"],
@@ -43,7 +38,13 @@ defmodule SubtleWeb.SubtleLive do
 
       <%= render_guesses(assigns) %>
       <%= render_legend(assigns) %>
+
+      <div class="possible_words">
+        <h1>Possible words:</h1>
+        <p><%= Game.available_words_as_string(@game) %></p>
       </div>
+
+    </div>
     """
 #    <p class="mt-30 text-zinc-200"> <%= Game.summary @game %> </p>
   end
@@ -82,14 +83,6 @@ defmodule SubtleWeb.SubtleLive do
       </div>
     </form>
     """
-#<input type="checkbox" name="prices[]" value={price} id={price}
-#   checked={price in @filter.prices} />
-#<label for={price}><%= price %></label>
-#
-#<.input type="checkbox" name="dictionary"
-#label="Require guess to be in the dictionary"
-#checked="true" value="true" class="text-zinc-200" />
-
   end
 
   attr :message, :string, required: true
@@ -137,24 +130,29 @@ defmodule SubtleWeb.SubtleLive do
 
   def render_legend(assigns) do
     ~H"""
-    <div class="flex rounded-lg p-4 bg-slate-700/50 grid grid-flow-row auto-rows-min gap-y-2">
-      <h1 class="text-xl font-medium text-zinc-200">Legend:</h1>
-      <.render_legend_key letter="!" hint={:correct} description="Correct letter" />
-      <.render_legend_key letter="?" hint={:wrong_position} description="Good letter, wrong location" />
-      <.render_legend_key letter="x" hint={:wrong_letter} description="Letter not in puzzle" />
-      <.render_legend_key letter="x" hint={:used} description="Letter somewhere in puzzle" />
-      <.render_legend_key letter="x" hint={:unused} description="Letter not guessed yet" />
+    <div class="legend">
+      <h1>Legend:</h1>
+      <div class="legend_group">
+        <h2>Guesses</h2>
+        <.render_legend_key letter="!" hint={:correct} description="Correct letter" />
+        <.render_legend_key letter="?" hint={:wrong_position} description="Good letter, wrong location" />
+        <.render_legend_key letter="x" hint={:wrong_letter} description="Letter not in answer" />
+      </div>
+      <div class="legend_group">
+        <h2>Letters used</h2>
+        <.render_legend_key letter="x" hint={:used} description="Somewhere in puzzle" />
+        <.render_legend_key letter="x" hint={:wrong_letter} description="Letter not in answer" />
+        <.render_legend_key letter="x" hint={:unused} description="Not guessed yet" />
+      </div>
     </div>
     """
   end
 
   def render_legend_key(assigns) do
     ~H"""
-    <div class="flex justify-after items-center space-x-4">
+    <div class="legend_key">
       <SubtleComponents.letter_box kind={:key} letter={@letter} hint={@hint}/>
-      <p class="text-left text-base md:text-lg font-medium text-zinc-200">
-        <%= @description %>
-      </p>
+      <p class="desc"> <%= @description %> </p>
     </div>
     """
   end
