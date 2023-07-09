@@ -60,6 +60,16 @@ defmodule Subtle.Game do
     end
   end
 
+  @doc """
+  This peril is just too perilous.
+  Game over man, I'm losing!
+  """
+  def game_over_man(game) do
+    game
+    |> Map.put(:puzzle, Puzzle.change_state(game. puzzle, :game_over))
+    |> Map.put(:message, "I just couldn't take it.")
+  end
+
   # This won't work correctly. Ideally, we want to show letters that are in
   # correct position, but we also need to show letter not in position.
   # We need to do that without giving hints away, unless they uncovered it.
@@ -168,50 +178,39 @@ defmodule Subtle.Game do
   def process_guesses(game) do
     game.puzzle.guesses
     |> Enum.reduce(%{bad: [], good: %{}, not_here: %{}},
-          fn guess, map -> process_and_merge_guess(guess, map) end)
-#    |> IO.inspect(label: "process_guesses")
+        fn guess, map ->
+          Map.merge(map, process_guess(guess), &merge_guess/3)
+        end)
   end
-  def process_and_merge_guess(guess, map) do
-    guess_map = process_guess(guess)
-    Map.merge(map, guess_map,
-      fn k, v1, v2 ->
-        case k do
-          :bad -> List.flatten([v2 | v1]) |> Enum.uniq  # concat letters and remove duplicates
-          :good -> Map.merge(v1, v2)    # merge the two "good letter" maps
-          # TODO: not correct yet
-          :not_here -> Map.merge(v1, v2)  # this will need more logic than this
-        end
-      end)
+
+  defp merge_guess(:bad, v1, v2) do
+    List.flatten([v2 | v1]) |> Enum.uniq  # concat letters and remove duplicates
   end
+  defp merge_guess(:good, v1, v2) do
+    Map.merge(v1, v2)    # merge the two "good letter" maps
+  end
+  defp merge_guess(:not_here, v1, v2) do
+    Map.merge(v1, v2)  # this will need more logic than this
+  end
+
   def process_guess(guess) do
-    # example:
+    # example output:
     # %{bad: ["m", "n"], good: %{1 => "a", 5 => "e"}, not_here => %{1 => ["x", "y"]}}
     guess.results
     |> Enum.with_index(1)   # start with offset 1
     |> Enum.reduce(%{bad: [], good: %{}, not_here: %{}}, &update_guess_map/2)
-#          fn {{letter, result}, index}, map ->
-#            case result do
-#              :wrong_letter ->
-#                Map.update!(map, :bad, fn l -> [letter | l] end)
-#              :correct ->
-#                Map.update!(map, :good, fn m -> Map.put(m, index, letter) end)
-#              :wrong_position ->
-#                Map.update!(map, :not_here, fn m ->
-#                  Map.update(m, index, [letter], fn l -> [letter | l] end) end)
-#            end
-#          end)
   end
 
-  defp update_guess_map({{letter, result}, index}, map) do
-    case result do
-      :wrong_letter ->
-          Map.update!(map, :bad, fn l -> [letter | l] end)
-      :correct ->
-          Map.update!(map, :good, fn m -> Map.put(m, index, letter) end)
-      :wrong_position ->
-          Map.update!(map, :not_here, fn m ->
-            Map.update(m, index, [letter], fn l -> [letter | l] end) end)
-    end
+  defp update_guess_map({{letter, :wrong_letter}, _index}, map) do
+    Map.update!(map, :bad, fn l -> [letter | l] end)
+  end
+  defp update_guess_map({{letter, :correct}, index}, map) do
+    Map.update!(map, :good, fn m -> Map.put(m, index, letter) end)
+  end
+  defp update_guess_map({{letter, :wrong_position}, index}, map) do
+    Map.update!(map, :not_here,
+        fn m -> Map.update(m, index, [letter], fn l -> [letter | l] end)
+      end)
   end
 
 end
