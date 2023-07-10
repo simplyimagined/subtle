@@ -67,7 +67,7 @@ defmodule Subtle.Game do
   def game_over_man(game) do
     game
     |> Map.put(:puzzle, Puzzle.change_state(game. puzzle, :game_over))
-    |> Map.put(:message, "I just couldn't take it.")
+    |> Map.put(:message, "Whomp whomp.")
   end
 
   # This won't work correctly. Ideally, we want to show letters that are in
