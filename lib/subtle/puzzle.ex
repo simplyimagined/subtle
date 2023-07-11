@@ -21,6 +21,9 @@ defmodule Subtle.Puzzle do
     guesses: []
   ]
 
+  @doc """
+  Create a new puzzle
+  """
   def new() do
     Puzzle.new(PuzzleDictionary.random_word())
   end
@@ -34,6 +37,9 @@ defmodule Subtle.Puzzle do
               guesses: []}
   end
 
+  @doc """
+  Allow changes to the rules, providing sane defaults
+  """
   def set_rules(puzzle, opts) when is_list(opts) do
     word_length = Keyword.get(opts, :word_length, @word_length)
     max_guesses = Keyword.get(opts, :max_guesses, @max_guesses)
@@ -69,7 +75,7 @@ defmodule Subtle.Puzzle do
     # check game status
     # verify word in dict
     with  true <- is_binary(guess),
-          true <- verify_guess_length(guess),
+          {:ok, @word_length} <- verify_guess_length(guess),
           {:dict, true} <- {:dict, PuzzleDictionary.verify_word(guess)}
     do
       {:ok, puzzle}
@@ -92,7 +98,7 @@ defmodule Subtle.Puzzle do
 
   def verify_guess_length(guess) do
     if (Enum.count(String.graphemes(guess)) == @word_length),
-      do: true,
+      do:   {:ok, @word_length},
       else: {:error, :invalid_length}
   end
 
@@ -188,7 +194,7 @@ defmodule Subtle.Puzzle do
   end
 
   def empty_guesses(puzzle) do
-    {:ok, result} = Guess.empty_guess(puzzle.answer)
+    {:ok, result} = Guess.empty_guess(puzzle.word_length)
     List.duplicate(result, Puzzle.guesses_remaining(puzzle))
   end
 
