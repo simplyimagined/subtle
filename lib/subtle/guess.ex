@@ -16,14 +16,13 @@ defmodule Subtle.Guess do
   Return an empty guess for the answer.
   This can be used to fill a partial puzzle.
   """
-  def empty_guess(answer) when is_binary(answer) do
-    len = Enum.count(String.graphemes(answer))
-    guess = new(String.duplicate(" ", len),
-      List.duplicate({" ", :none}, len))
+  def empty_guess(count) when is_integer(count) do
+    guess = new(String.duplicate(" ", count),
+      List.duplicate({" ", :none}, count))
 
     {:ok, guess}
   end
-  def empty_guess(_answer), do: {:error, :invalid_arguments}
+  def empty_guess(_count), do: {:error, :invalid_arguments}
 
 #I have no idea how to typedef what I want, so dynamic it is!
  # @letter_position [:correct, :wrong_position, :wrong_letter, :none]
@@ -127,9 +126,6 @@ defmodule Subtle.Guess do
         fn letter_result, counts ->
           remove_underflows(letter_result, counts) end)
 
-#    IO.puts("adjusted:")
-#    IO.inspect(adjusted)
-
     # return only the answers, not the counts
     adjusted
   end
@@ -195,6 +191,7 @@ defmodule Subtle.Guess do
     word
     |> String.graphemes()
     |> Enum.frequencies()
+# I reinvented Enum.frequencies!
 #    |> Enum.reduce(%{}, fn char, acc ->
 #          Map.put(acc, char, (acc[char] || 0) + 1)
 #        end)
@@ -217,7 +214,6 @@ defmodule Subtle.Guess do
       Map.put(acc, letter, adjust_count(letter, reduced_letter, count)) end)
   end
 
-#  defp adjust_count(a, b, count) when a == b and count > 0, do: count - 1
   defp adjust_count(a, b, count) when a == b, do: count - 1
   defp adjust_count(_a, _b, count), do: count
 end
