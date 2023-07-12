@@ -13,7 +13,10 @@ defmodule SubtleWeb.SubtleComponents do
   def letter_box(assigns) do
   #  IO.inspect(assigns)
     ~H"""
-    <div class={class_for_kind(@kind)}>
+    <div class={class_for_kind(@kind)}
+      phx-click={if @kind == :guess, do: "guesspress", else: "letterpress"}
+      phx-value-key={@letter}
+    >
       <p class={class_for_hint(@hint)}>
         <%= String.replace_prefix(@letter, " ", "&nbsp;") |> raw() %>
       </p>
@@ -46,7 +49,15 @@ defmodule SubtleWeb.SubtleComponents do
     <div class="flex rounded-lg p-2 bg-slate-700/20 grid grid-flow-row auto-rows-min gap-y-2">
       <.letter_row keys={~w[q w e r t y u i o p]} letters={@letters} />
       <.letter_row keys={~w[a s d f g h j k l]} leading={2} letters={@letters} />
-      <.letter_row keys={~w[z x c v b n m]} leading={4} letters={@letters} />
+      <div class="bottom_row">
+        <CoreComponents.button class="whitespace-nowrap">
+          Guess
+        </CoreComponents.button>
+        <.letter_row keys={~w[z x c v b n m]} leading={4} letters={@letters} />
+        <CoreComponents.button>
+          <CoreComponents.icon name="hero-backspace" />
+        </CoreComponents.button>
+      </div>
     </div>
     """
   end
@@ -57,7 +68,11 @@ defmodule SubtleWeb.SubtleComponents do
 
   def letter_row(assigns) do
     ~H"""
-    <div class="grid grid-flow-col justify-start gap-x-1 md:gap-x-2">
+    <div class={[
+      "grid grid-flow-col",
+       "ml-" <> to_string(@leading),
+       "justify-start gap-x-1 md:gap-x-2"
+    ]}>
       <%= for key <- @keys do %>
         <.letter_box kind={:key} letter={key} hint={hint_for_key(@letters, key)} />
       <% end %>
