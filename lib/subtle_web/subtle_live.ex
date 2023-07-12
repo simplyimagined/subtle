@@ -11,16 +11,18 @@ defmodule SubtleWeb.SubtleLive do
                   session_id: session["live_socket_id"],
                   game: Game.new(),
                   message: "Subtle",
-                  settings: to_form(%{verify: true})
+                  guess: "",
+                  settings: to_form(%{"verify" => true})
                 )}
   end
 
+  def handle_params(_params, _uri, socket) do
+    {:noreply, assign(socket,
+                      message: socket.assigns.game.message)
+    }
+  end
+
   def render(assigns) do
-#<h2 class="text-2xl text-zinc-200 mb-4">
-#<%= @message %>
-#</h2>
-    #    <Heroicons.cog_8_tooth mini class="absolute top-5 right-5 w-6 h-6 fill-zinc-200"
-#    phx-click={show_modal("settings-modal-id")} />
     ~H"""
     <div class="app_header">
       <div class="flex justify-start gap-x-2">
@@ -71,9 +73,9 @@ defmodule SubtleWeb.SubtleLive do
       <div class="relative flex rounded-lg p-2 bg-slate-700/50">
 
         <%= if Game.state(@game) == :playing do %>
-          <.guess_form message={Game.message(@game)} verify={@game.verify_guesses} />
+          <.guess_form message={@game.message} guess={@guess} />
         <% else %>
-          <.game_over message={Game.message(@game)} answer={Game.answer(@game)} />
+          <.game_over message={@game.message} answer={Game.answer(@game)} />
         <% end %>
       </div>
 
@@ -86,7 +88,7 @@ defmodule SubtleWeb.SubtleLive do
   end
 
   attr :message, :string, default: ""
-  attr :value, :string, default: ""
+  attr :guess, :string, default: ""
   attr :verify, :boolean, default: true
   attr :errors, :list, default: []
 
@@ -95,6 +97,18 @@ defmodule SubtleWeb.SubtleLive do
 #    IO.inspect(assigns)
 #me <div class="flex space-x-4 auto-rows-max items-center">
 #them <div class="flex items-center justify-between border-b border-zinc-100 py-3 text-sm">
+#          <input type="text" id="guess" name="guess"
+#            autofocus autocomplete="off"
+#            value={Phoenix.HTML.Form.normalize_value("text", @value)}
+#            class={[
+#              "block w-full rounded-lg text-zinc-900",
+#              "text-md md:text-xl leading-4 md:leading-6",
+#              "phx-no-feedback:border-zinc-300 phx-no-feedback:focus:border-zinc-400",
+#              "border-zinc-300 focus:border-zinc-400",
+#              @errors != [] && "border-rose-400 focus:border-rose-400"
+#            ]}
+#          />
+
     ~H"""
     <form id="guess_form" phx-submit="guess">
       <div class="p-4 space-y-4">
@@ -102,17 +116,11 @@ defmodule SubtleWeb.SubtleLive do
           <%= @message %>
         </label>
         <div class="flex items-center justify-between space-x-4">
-          <input type="text" id="guess" name="guess"
-            autofocus autocomplete="off"
-            value={Phoenix.HTML.Form.normalize_value("text", @value)}
-            class={[
-              "block w-full rounded-lg text-zinc-900",
-              "text-md md:text-xl leading-4 md:leading-6",
-              "phx-no-feedback:border-zinc-300 phx-no-feedback:focus:border-zinc-400",
-              "border-zinc-300 focus:border-zinc-400",
-              @errors != [] && "border-rose-400 focus:border-rose-400"
-            ]}
-          />
+        <.input type="text" id="guess" name="guess"
+          autofocus autocomplete="off"
+          value={Phoenix.HTML.Form.normalize_value("text", @guess)}
+          class= "font-bold text-xl text-zinc-800"
+        />
           <.button class="whitespace-nowrap">
             Guess
             <.icon name="hero-question-mark-circle-mini" class="ml-1 w-6 h-6" />
@@ -125,17 +133,46 @@ defmodule SubtleWeb.SubtleLive do
 
   attr :message, :string, required: true
   attr :answer, :string, required: true
-
+# The word was \u201C" <> String.upcase(@answer) <> "\u201D."
   def game_over(assigns) do
     ~H"""
     <div class="flex items-center space-x-10">
       <p class="text-2xl text-zinc-200">
-        <%= @message <> "  The word was \u201C" <> String.upcase(@answer) <> "\u201D." %>
+        <%= @message %>
       </p>
       <.button phx-click="new_game">New Game</.button>
     </div>
     """
   end
+
+#  attr :message, :string, required: true
+#  attr :answer, :string, default: nil
+#  attr :post, :string, default: nil
+#
+#  def pretty_message(assigns) do
+#    ~H"""
+#      <%= @message %>
+#      <%= if @answer do %>
+#        <span class="font-medium"><%= @answer %></span>
+#      <% end %>
+#      <%= if @post do %>
+#        <%= @post %>
+#      <% end %>
+#    """
+#  end
+#  defp pretty_args(msg) do
+#    with [message, answer, post] <- String.split(msg, "\"") do
+#      %{message: message, emphasize: answer, post: post}
+#    else
+#      _ -> %{message: msg}
+#    end
+#  end
+#    with 3 <- Enum.count(l) do
+#      Enum.at(l, 0) <> "<span class=\"font-bold\">" <> "\u201C" <>
+#        Enum.at(l, 1) <> "\u201D" <> "</span>" <> Enum.at(l, 2)
+#    else
+#      _ -> msg
+#    end
 
   attr :game, :map, required: true
   def render_guesses(assigns) do
@@ -229,6 +266,15 @@ defmodule SubtleWeb.SubtleLive do
       {:error, game} ->
         {:noreply, assign(socket, game: game)}
     end
+  end
+
+  def handle_event("guesspress", _params, socket) do
+    {:noreply, socket}  #maybe something later
+  end
+
+  def handle_event("letterpress", %{"key" => letter} = _params, socket) do
+    guess = Map.get(socket.assigns, :guess, "") <> letter
+    {:noreply, assign(socket, guess: guess)}
   end
 
   def handle_event("settings", %{"verify" => verify} = _params, socket) do
