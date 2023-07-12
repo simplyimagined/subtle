@@ -147,4 +147,24 @@ defmodule Subtle.PuzzleTest do
       assert Enum.count(Puzzle.normalized_guesses(puzzle)) == puzzle.max_guesses
     end
   end
+
+  describe "verify_guess before make_guess" do
+    test "garbage input" do
+      puzzle = Puzzle.new("paper")
+      assert {:error, puzzle, :invalid_arguments} == Puzzle.verify_guess(puzzle, 12345)
+    end
+
+    test "guess length" do
+      puzzle = Puzzle.new("paper")
+      changed = Puzzle.change_message(puzzle, "Guess must be #{puzzle.word_length} letters.")
+      assert {:error, changed, :invalid_length} == Puzzle.verify_guess(puzzle, "abc")
+      assert {:error, changed, :invalid_length} == Puzzle.verify_guess(puzzle, "abcdefg")
+    end
+
+    test "game over" do
+      puzzle = Puzzle.new("paper") |> Map.put(:state, :game_over)
+      assert {:error, puzzle, :game_over} == Puzzle.verify_guess(puzzle, "guess")
+    end
+  end
+
 end
