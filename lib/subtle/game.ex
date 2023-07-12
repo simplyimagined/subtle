@@ -36,27 +36,91 @@ defmodule Subtle.Game do
 
   def guesses(game), do: Puzzle.normalized_guesses(game.puzzle)
 
-  def verify_guess(game, guess) do
-    case game.verify_guesses do
-      true -> Puzzle.verify_guess(game.puzzle, guess)
-      false -> {:ok, game.puzzle}
-    end
+  @doc """
+  Verify that the guess would be appropriate
+  Will update the game's :message upon failure
+  Returns:
+     {:ok, game} if ok to make a guess
+     {:error, game} :message contains error text
+  """
+  def verify_guess(game, guess) when game.verify_guesses do
+    case Puzzle.verify_guess(puzzle = game.puzzle, guess) do
+      {:ok, _puzzle} ->
+        {:ok, game}
+      {:error, :invalid_arguments} ->
+        {:error, Map.put(game, :message,
+                    guess_message(puzzle, :invalid_arguments)) }
+      {:error, :invalid_length} ->
+        {:error, Map.put(game, :message,
+                    guess_message(puzzle, :invalid_length)) }
+      {:error, :invalid_word} ->
+        {:error, Map.put(game, :message,
+                    guess_message(guess, :invalid_word)) }
+      {:error, :game_over} ->
+        {:error, Map.put(game, :message,
+                    guess_message(puzzle, :game_already_finished)) }
+      end
+  end
+  def verify_guess(game, _guess) do   # we're not verifying, continue
+    {:ok, game}
   end
 
+  @doc """
+  Make a guess with the given word
+  Returns
+    {:ok, game} if successful, :message is updated
+    {:error, game} :message contains error text
+  """
   def make_guess(game, guess) do
     guess = String.downcase(guess)
 
-    with  {:ok, _puzzle} <- verify_guess(game, guess),
+    with  {:ok, _game} <- verify_guess(game, guess),
           {:ok, puzzle} <- Puzzle.make_guess(game.puzzle, guess)
     do
       {:ok, game
             |> Map.put(:puzzle, puzzle)
-            |> Map.put(:message, puzzle.message)}
+            |> Map.put(:message, guess_message(puzzle, puzzle.state))
+      }
     else
-      {:error, puzzle, _reason} ->
+      {:error, :invalid_length} ->
         {:error, game
-                  |> Map.put(:puzzle, puzzle)
-                  |> Map.put(:message, puzzle.message)}
+                  |> Map.put(:puzzle, game.puzzle)
+                  |> Map.put(:message,
+                      guess_message(game.puzzle, :invalid_length))
+        }
+      {:error, :game_over} ->
+        {:error, game
+                  |> Map.put(:puzzle, game.puzzle)
+                  |> Map.put(:message,
+                        guess_message(game.puzzle, :game_over))}
+      {:error, :baby_dont_hurt_me} ->
+        {:error, game
+                  |> Map.put(:puzzle, game.puzzle)
+                  |> Map.put(:message,
+                        guess_message(game.puzzle, :baby_dont_hurt_me))}
+      {:error, game} -> # from verify_guess, message is already set
+        {:error, game}
+    end
+  end
+
+  defp guess_message(guess, :invalid_word) do
+    "Your guess, \"#{guess}\", must be in the dictionary."
+  end
+  defp guess_message(puzzle, kind) do
+    case kind do
+      :game_won -> "You won!"
+      :game_over -> "Game over! The answer was \"#{puzzle.answer}\""
+      :playing -> "Guess another word."
+      :invalid_arguments ->
+        "Guess must be a #{puzzle.word_length} letter word."
+      :invalid_length ->
+        "Guess must be a #{puzzle.word_length} letter word."
+      :game_already_finished ->
+        "Game is already finished"
+      :baby_dont_hurt_me ->
+        "Baby don't hurt me! Logic path went sideways."
+      :gave_up ->
+        "Whomp whomp. The answer was \"#{puzzle.answer}\"."
     end
   end
 
@@ -66,8 +130,8 @@ defmodule Subtle.Game do
   """
   def game_over_man(game) do
     game
-    |> Map.put(:puzzle, Puzzle.change_state(game. puzzle, :game_over))
-    |> Map.put(:message, "Whomp whomp.")
+    |> Map.put(:puzzle, Puzzle.change_state(game.puzzle, :game_over))
+    |> Map.put(:message, guess_message(game.puzzle, :gave_up))
   end
 
   # This won't work correctly. Ideally, we want to show letters that are in

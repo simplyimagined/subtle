@@ -17,7 +17,6 @@ defmodule Subtle.Puzzle do
     word_length: @word_length,
     max_guesses: @max_guesses,
     answer: "",
-    message: "",
     guesses: []
   ]
 
@@ -33,7 +32,6 @@ defmodule Subtle.Puzzle do
               word_length: @word_length,
               max_guesses: @max_guesses,
               answer: answer,
-              message: "Guess a word.",
               guesses: []}
   end
 
@@ -80,82 +78,61 @@ defmodule Subtle.Puzzle do
     do
       {:ok, puzzle}
     else
-      false -> {:error, puzzle, :invalid_arguments}
-      {:error, :invalid_length} ->
-          {:error,
-            change_message(puzzle, "Guess must be #{puzzle.word_length} letters."),
-            :invalid_length}
-      {:dict, false} ->
-          {:error,
-            change_message(puzzle, "Your guess, \"#{guess}\", must be in the dictionary."),
-            :invalid_word}
-
-      {:error, _} -> {:error, puzzle, :baby_dont_hurt_me}
+      false ->                        # didn't pass in a string
+        {:error, :invalid_arguments}
+      {:error, :invalid_length} ->    # wrong length
+        {:error, :invalid_length}
+      {:dict, false} ->               # guess not in the dictionary
+        {:error, :invalid_word}
+      {:error, _} ->                  # we should never, ever get here
+        {:error, :baby_dont_hurt_me}
     end
   end
-  def verify_guess(puzzle, _), do: {:error, puzzle, :game_over}
+  def verify_guess(_puzzle, _guess), do: {:error, :game_over}
 
-
-  def verify_guess_length(guess) do
+  defp verify_guess_length(guess) do
     if (Enum.count(String.graphemes(guess)) == @word_length),
       do:   {:ok, @word_length},
       else: {:error, :invalid_length}
   end
 
+  @doc """
+  Make a guess with the given word
+  Returns a tuple
+    {:ok, puzzle} with guess and results appended to puzzle
+    {:error, reason}
+  """
   def make_guess(%Puzzle{state: :playing} = puzzle, guess) do
     case Guess.guess_word(guess, puzzle.answer) do
       {:ok, :correct, guess_result} ->
         # correct guess will transition the puzzle to :game_won
         {:ok, puzzle
               |> change_state(:game_won)
-              |> change_message("You won!")
               |> add_result(guess_result)}
-#        change_state_and_add_guess(puzzle, :game_won, guess_result)}
       {:ok, :incorrect, guess_result} ->
         # incorrect guess will update the puzzle and check for :game_over
         case last_guess?(puzzle) do
           true ->
             {:ok, puzzle
                   |> change_state(:game_over)
-                  |> change_message("Game over!")
                   |> add_result(guess_result)}
-#            {:ok, change_state_and_add_guess(puzzle, :game_over, guess_result)}
           false ->
             {:ok, puzzle
-                  |> change_message("Guess a different word.")
                   |> add_result(guess_result)}
-#            {:ok, add_guess(puzzle, guess_result)}
         end
       # don't pass in garbage!
-      {:error, :invalid_length} ->
-        {:error,
-          change_message(puzzle, "Guess must be #{puzzle.word_length} letters"),
-          :invalid_length}
-      {:error, _} ->
-        {:error,
-          change_message(puzzle, "Enter a #{puzzle.word_length} letter word"),
-          :baby_dont_hurt_me}
+      #TODO: I don't think I need to check for this, it should just be returned
+      {:error, :invalid_length} -> {:error, :invalid_length}
+      {:error, _} -> {:error, :baby_dont_hurt_me}
     end
   end
-  def make_guess(puzzle, _), do: {:error, puzzle, :game_over}
+  def make_guess(_puzzle, _guess), do: {:error, :game_over}
 
   def change_state(puzzle, state), do: %{puzzle | state: state}
   def change_message(puzzle, message), do: %{puzzle | message: message}
   def add_result(puzzle, result) do
     %{puzzle | guesses: puzzle.guesses ++ [result]}
   end
-
-#  def change_state_and_add_guess(puzzle, state, guess_result) do
-#    # this works but I feel it's not the 'right' way
-#    %Puzzle{puzzle | state: state}
-#    |> add_guess(guess_result)
-#  end
-
- # def add_guess(puzzle, guess_result) do
- #   # this works but I feel it's not the 'right' way
- #   %Puzzle{state: puzzle.state, answer: puzzle.answer,
- #     guesses: List.insert_at(puzzle.guesses, -1, guess_result)}
- # end
 
   @doc """
   Returns true if they have taken at least one guess
