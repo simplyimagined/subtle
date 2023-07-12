@@ -12,7 +12,7 @@ config :subtle,
 
 # Configures the endpoint
 config :subtle, SubtleWeb.Endpoint,
-  url: [host: "localhost"],
+  url: [host: "0.0.0.0"],
   render_errors: [
     formats: [html: SubtleWeb.ErrorHTML, json: SubtleWeb.ErrorJSON],
     layout: false
