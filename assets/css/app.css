@@ -86,7 +86,12 @@
   div .keybox p.none {
     @apply bg-sky-500;
   }
-
+  div .bottom_row {
+    @apply flex flex-row gap-x-1 md:gap-x-2;
+  }
+  div .bottom_row button {
+    @apply width-40 bg-slate-800 uppercase py-0 text-base h-7 md:h-12 items-center font-semibold text-zinc-200 rounded-md border border-zinc-200;
+  }
 
   div .legend {
     @apply flex flex-col gap-y-2 gap-x-2;
