@@ -37,7 +37,7 @@ defmodule SubtleWeb.SubtleLive do
     </div>
 
     <.subtle_modal id="legend-modal">
-      <%= legend(assigns) %>
+      <%= SubtleComponents.legend(assigns) %>
     </.subtle_modal>
     <.subtle_modal id="help-modal">
       <div class="possible_words">
@@ -79,7 +79,10 @@ defmodule SubtleWeb.SubtleLive do
         <% end %>
       </div>
 
-      <%= render_guesses(assigns) %>
+      <div class="gamebox">
+        <SubtleComponents.guesses game={@game} />
+        <SubtleComponents.letters_used letters={Game.letters_used(@game)} />
+      </div>
 
     </div>
     """
@@ -174,67 +177,7 @@ defmodule SubtleWeb.SubtleLive do
 #      _ -> msg
 #    end
 
-  attr :game, :map, required: true
-  def render_guesses(assigns) do
-#    IO.inspect(Puzzle.normalized_guesses(assigns.puzzle))
-    ~H"""
-    <div class="flex rounded-lg p-4 justify-center bg-slate-700/50">
-      <div class="grid grid-flow-row justify-center auto-rows-max gap-y-2 md:gap-y-4">
-        <%= for guess <- Game.guesses(@game) do %>
-          <%= render_guess guess %>
-        <% end %>
-        <p class="text-zinc-200 ml-3"> <%= Game.guesses_remaining(@game) %> guesses remaining </p>
 
-        <SubtleComponents.show_letters_used letters={Game.letters_used(@game)} />
-      </div>
-
-    </div>
-    """
-  end
-
-  attr :results, :list, required: true
-
-  def render_guess(assigns) do
-#    IO.inspect(assigns)
-    ~H"""
-    <div class="guessrow">
-      <%= for {letter, hint} = _result <- @results do %>
-        <SubtleComponents.letter_box kind={:guess} letter={letter} hint={hint}/>
-      <% end %>
-    </div>
-    """
-  end
-
-  def legend(assigns) do
-    ~H"""
-    <div class="legend">
-      <h1>Legend:</h1>
-      <div class="legend_groups">
-        <div class="legend_group">
-          <h2>Guesses</h2>
-          <.legend_key letter="!" hint={:correct} description="Correct letter" />
-          <.legend_key letter="?" hint={:wrong_position} description="Good letter, wrong location" />
-          <.legend_key letter="x" hint={:wrong_letter} description="Letter not in answer" />
-        </div>
-        <div class="legend_group">
-          <h2>Letters used</h2>
-          <.legend_key letter="x" hint={:used} description="Somewhere in puzzle" />
-          <.legend_key letter="x" hint={:wrong_letter} description="Letter not in answer" />
-          <.legend_key letter="x" hint={:unused} description="Not guessed yet" />
-        </div>
-      </div>
-    </div>
-    """
-  end
-
-  def legend_key(assigns) do
-    ~H"""
-    <div class="legend_key">
-      <SubtleComponents.letter_box kind={:key} letter={@letter} hint={@hint}/>
-      <p class="desc"> <%= @description %> </p>
-    </div>
-    """
-  end
 
   def available_answers(game) do
     answers = Game.available_words_as_string(game, 20)

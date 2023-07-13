@@ -3,57 +3,69 @@ defmodule SubtleWeb.SubtleComponents do
   use Phoenix.HTML
 
   alias Phoenix.LiveView.JS
+
   alias SubtleWeb.CoreComponents
   import SubtleWeb.Gettext
+  alias Subtle.Game
 
-  attr :letter, :string, required: true
-  attr :hint, :atom, values: [:correct, :wrong_letter, :wrong_position, :used, :unused, :none], default: :none
-  attr :kind, :atom, values: [:guess, :key], required: true
+  attr :game, :map, required: true
 
-  def letter_box(assigns) do
-  #  IO.inspect(assigns)
+  def guesses(assigns) do
     ~H"""
-    <div class={class_for_kind(@kind)}
-      phx-click={if @kind == :guess, do: "guesspress", else: "letterpress"}
-      phx-value-key={@letter}
-    >
-      <p class={class_for_hint(@hint)}>
-        <%= String.replace_prefix(@letter, " ", "&nbsp;") |> raw() %>
-      </p>
+    <div class="guesses">
+      <%= for result <- Game.live_guess_results(@game) do %>
+        <.guess_row guess={result} />
+      <% end %>
+      <p class="text-zinc-200 ml-3"> <%= Game.guesses_remaining(@game) %> guesses remaining </p>
     </div>
     """
   end
 
-  defp class_for_kind(box_type) do
-    case box_type do
-      :guess -> "guessbox"
-      :key -> "keybox"
-    end
+  attr :guess, :list, required: true
+
+  def guess_row(assigns) do
+    ~H"""
+    <div class="guessrow">
+      <%= for %{letter: letter, hint: hint} <- @guess do %>
+        <.guess_box letter={letter} hint={hint} />
+      <% end %>
+    </div>
+    """
   end
 
-  defp class_for_hint(hint_type) do
+  attr :letter, :string, required: true
+  attr :hint, :atom, values: [:correct, :wrong_letter, :wrong_position, :none], default: :none
+
+  def guess_box(assigns) do
+    IO.inspect(assigns, label: "guess_box")
+    ~H"""
+    <div class="guessbox">
+      <p class={box_class(@hint)}><%= @letter %></p>
+    </div>
+    """
+  end
+
+  defp box_class(hint_type) do
     case hint_type do
       :correct -> "correct"
-      :wrong_letter -> "wrong_letter"
-      :wrong_position -> "wrong_position"
+      :wrong_letter -> "wrong_l"
+      :wrong_position -> "wrong_p"
       :used -> "used"
       :unused -> "unused"
       :none -> "none"
     end
   end
 
-  attr :letters, :map, required: true
-
-  def show_letters_used(assigns) do
+  def letters_used(assigns) do
     ~H"""
-    <div class="flex rounded-lg p-2 bg-slate-700/20 grid grid-flow-row auto-rows-min gap-y-2">
-      <.letter_row keys={~w[q w e r t y u i o p]} letters={@letters} />
-      <.letter_row keys={~w[a s d f g h j k l]} leading={2} letters={@letters} />
+    <div class="keys_used">
+      <.key_row keys={~w[q w e r t y u i o p]} letters={@letters} />
+      <.key_row keys={~w[a s d f g h j k l]} letters={@letters} />
       <div class="bottom_row">
         <CoreComponents.button class="whitespace-nowrap">
           Guess
         </CoreComponents.button>
-        <.letter_row keys={~w[z x c v b n m]} leading={4} letters={@letters} />
+        <.key_row keys={~w[z x c v b n m]} letters={@letters} />
         <CoreComponents.button>
           <CoreComponents.icon name="hero-backspace" />
         </CoreComponents.button>
@@ -63,22 +75,16 @@ defmodule SubtleWeb.SubtleComponents do
   end
 
   attr :keys, :list, required: true
-  attr :letters, :map, required: true
-  attr :leading, :integer, default: 0
+  attr :letters, :list, required: true
 
-  def letter_row(assigns) do
+  def key_row(assigns) do
     ~H"""
-    <div class={[
-      "grid grid-flow-col",
-       "ml-" <> to_string(@leading),
-       "justify-start gap-x-1 md:gap-x-2"
-    ]}>
+    <div class="keysrow">
       <%= for key <- @keys do %>
-        <.letter_box kind={:key} letter={key} hint={hint_for_key(@letters, key)} />
+        <.key_box letter={key} hint={hint_for_key(@letters, key)} />
       <% end %>
     </div>
     """
-#    <div class={"grid grid-flow-col justify-start gap-x-2 ms-" <> to_string(@leading)}>
   end
 
   defp hint_for_key(letters, key) do
@@ -90,6 +96,87 @@ defmodule SubtleWeb.SubtleComponents do
       true -> :unused
     end
   end
+
+  attr :letter, :string, required: true
+  attr :hint, :atom, values: [:used, :unused, :none], default: :none
+
+  def key_box(assigns) do
+  #  IO.inspect(assigns)
+    ~H"""
+    <div class="keybox" phx-click="letterpress" phx-value-key={@letter}>
+      <p class={box_class(@hint)}>
+        <%= String.replace_prefix(@letter, " ", "&nbsp;") |> raw() %>
+      </p>
+    </div>
+    """
+  end
+
+  attr :letters, :map, required: true   # map of letters and their hint type
+
+  def legend(assigns) do
+    ~H"""
+    <div class="legend">
+      <h1>Legend:</h1>
+      <div class="legend_groups">
+        <div class="legend_group">
+          <h2>Guesses</h2>
+          <.legend_key letter="!" hint={:correct} description="Correct letter" />
+          <.legend_key letter="?" hint={:wrong_position} description="Good letter, wrong location" />
+          <.legend_key letter="x" hint={:wrong_letter} description="Letter not in answer" />
+        </div>
+        <div class="legend_group">
+          <h2>Letters used</h2>
+          <.legend_key letter="x" hint={:used} description="Somewhere in puzzle" />
+          <.legend_key letter="x" hint={:wrong_letter} description="Letter not in answer" />
+          <.legend_key letter="x" hint={:unused} description="Not guessed yet" />
+        </div>
+      </div>
+    </div>
+    """
+  end
+
+  def legend_key(assigns) do
+    ~H"""
+    <div class="legend_key">
+      <.legend_box letter={@letter} hint={@hint}/>
+      <p class="desc"> <%= @description %> </p>
+    </div>
+    """
+  end
+
+  attr :letter, :string, required: true
+  attr :hint, :atom, values: [:correct, :wrong_letter, :wrong_position, :used, :unused, :none], default: :none
+
+  def legend_box(assigns) do
+  #  IO.inspect(assigns)
+    ~H"""
+    <div class="keybox">
+      <p class={box_class(@hint)}>
+        <%= String.replace_prefix(@letter, " ", "&nbsp;") |> raw() %>
+      </p>
+    </div>
+    """
+  end
+
+#  attr :keys, :list, required: true
+#  attr :letters, :map, required: true
+#  attr :leading, :integer, default: 0
+#
+#  def letter_row(assigns) do
+#    ~H"""
+#    <div class={[
+#      "grid grid-flow-col",
+#       "ml-" <> to_string(@leading),
+#       "justify-start gap-x-1 md:gap-x-2"
+#    ]}>
+#      <%= for key <- @keys do %>
+#        <.letter_box kind={:key} letter={key} hint={hint_for_key(@letters, key)} />
+#      <% end %>
+#    </div>
+#    """
+#    <div class={"grid grid-flow-col justify-start gap-x-2 ms-" <> to_string(@leading)}>
+#  end
+
 
   attr :modal_id, :string, required: true
   attr :icon, :string, required: true
