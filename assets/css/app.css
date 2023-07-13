@@ -67,7 +67,7 @@
   }
   div .legend p.wrong_l,
   div .guessbox p.wrong_l {
-    @apply bg-zinc-500;
+    @apply bg-zinc-600;
   }
   div .legend p.wrong_p,
   div .guessbox p.wrong_p {
@@ -104,7 +104,10 @@
   }
   div .legend p.unused,
   div .keybox p.unused {
-    @apply bg-slate-800;
+    @apply bg-slate-700;
+  }
+  div .keybox p.wrong_l {
+    @apply bg-zinc-800;
   }
   div .legend p.none,
   div .keybox p.none {
