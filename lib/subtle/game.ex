@@ -1,6 +1,6 @@
 defmodule Subtle.Game do
 
-  alias Subtle.{Game, Puzzle, PuzzleDictionary}
+  alias Subtle.{Game, Puzzle, Guess, PuzzleDictionary}
 
   @verify_guesses true
 
@@ -35,6 +35,15 @@ defmodule Subtle.Game do
   def summary(game), do: Puzzle.summary(game.puzzle)
 
   def guesses(game), do: Puzzle.normalized_guesses(game.puzzle)
+
+  def live_guess_results(game) do
+    # pull out just the results, place them in %{letter:, hint:}
+    # easy path, later want to work guess in
+    Puzzle.normalized_guesses(game.puzzle)
+    |> Enum.map(fn %Guess{guess: _guess, results: results} ->
+          Enum.map(results, fn {letter, hint} -> %{letter: letter, hint: hint} end)
+        end )
+  end
 
   @doc """
   Verify that the guess would be appropriate
