@@ -62,13 +62,13 @@ defmodule SubtleWeb.SubtleComponents do
       <.key_row keys={~w[q w e r t y u i o p]} letters={@letters} />
       <.key_row keys={~w[a s d f g h j k l]} letters={@letters} />
       <div class="bottom_row">
-        <CoreComponents.button class="whitespace-nowrap">
+        <button>
           Guess
-        </CoreComponents.button>
+        </button>
         <.key_row keys={~w[z x c v b n m]} letters={@letters} />
-        <CoreComponents.button>
+        <button>
           <CoreComponents.icon name="hero-backspace" />
-        </CoreComponents.button>
+        </button>
       </div>
     </div>
     """
