@@ -42,7 +42,7 @@ defmodule SubtleWeb.SubtleLive do
     <.subtle_modal id="help-modal">
       <div class="possible_words">
         <h1>Possible words:</h1>
-        <p><%= available_answers(@game) %></p>
+        <p><%= Game.available_answers(@game, 20) %></p>
       </div>
     </.subtle_modal>
     <.subtle_modal id="quit-modal">
@@ -88,17 +88,6 @@ defmodule SubtleWeb.SubtleLive do
 
     </div>
     """
-#
-#<div class="relative flex rounded-lg p-2 bg-slate-700/50">
-#<%= if Game.state(@game) == :playing do %>
-#  <.guess_form message={@game.message} guess={@guess} />
-#<% else %>
-#  <.game_over message={@game.message} answer={Game.answer(@game)} />
-#<% end %>
-#</div>
-#
-#      <%= render_legend(assigns) %>
-      #    <p class="mt-30 text-zinc-200"> <%= Game.summary @game %> </p>
   end
 
   attr :message, :string, default: ""
@@ -107,22 +96,6 @@ defmodule SubtleWeb.SubtleLive do
   attr :errors, :list, default: []
 
   def guess_form(assigns) do
-#    IO.puts("guess_form.assigns")
-#    IO.inspect(assigns)
-#me <div class="flex space-x-4 auto-rows-max items-center">
-#them <div class="flex items-center justify-between border-b border-zinc-100 py-3 text-sm">
-#          <input type="text" id="guess" name="guess"
-#            autofocus autocomplete="off"
-#            value={Phoenix.HTML.Form.normalize_value("text", @value)}
-#            class={[
-#              "block w-full rounded-lg text-zinc-900",
-#              "text-md md:text-xl leading-4 md:leading-6",
-#              "phx-no-feedback:border-zinc-300 phx-no-feedback:focus:border-zinc-400",
-#              "border-zinc-300 focus:border-zinc-400",
-#              @errors != [] && "border-rose-400 focus:border-rose-400"
-#            ]}
-#          />
-
     ~H"""
     <form id="guess_form" phx-submit="guess">
       <div class="p-4 space-y-4">
@@ -188,39 +161,6 @@ defmodule SubtleWeb.SubtleLive do
 #      _ -> msg
 #    end
 
-
-
-  def available_answers(game) do
-    answers = Game.available_words_as_string(game, 20)
-    if answers == "" do
-      "You haven't made a guess yet!"
-    else
-      answers
-    end
-  end
-
-#  def handle_event("guess", %{"guess" => guess}, socket) do
-#    guess =
-#      guess
-#      |> String.trim
-#      |> String.downcase
-#
-#    # !! hack gets us true/false from nil, "true"
-##    verify = !!Map.get(params, "verify", false)
-##    game = %{socket.assigns.game | verify_guesses: verify}
-#    game = socket.assigns.game
-##    IO.inspect(guess, label: "guess")
-##    IO.inspect(verify, label: "verify")
-##    IO.inspect(game)
-#
-#    with {:ok, game} <- Game.make_guess(game, guess) do
-#      {:noreply, assign(socket, game: game)}
-#    else
-#      # opportunity to set some error assigns
-#      {:error, game} ->
-#        {:noreply, assign(socket, game: game)}
-#    end
-#  end
 
   def handle_event("guess", _params, socket) do
     guess =

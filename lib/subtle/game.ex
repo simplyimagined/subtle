@@ -202,7 +202,8 @@ defmodule Subtle.Game do
     |> Map.put(:message, guess_message(game.puzzle, :gave_up))
   end
 
-  # This won't work correctly. Ideally, we want to show letters that are in
+  # This won't work correctly as is, but close enough for fun.
+  # Ideally, we want to show letters that are in
   # correct position, but we also need to show letter not in position.
   # We need to do that without giving hints away, unless they uncovered it.
   # Then we need to show used letters.
@@ -231,6 +232,27 @@ defmodule Subtle.Game do
   end
 
   @doc """
+  Returns a string of words that might be the answer for the game
+
+  ## Examples
+    Game.new("paper")
+    Game.make_guess("stare")
+    Game.make_guess("panic")
+    Game.process_guesses
+    "paddy, paler, papal, paper, parer, parka, parry, payee, payer, ..."
+  """
+  def available_answers(game, max_words \\ 10)
+  def available_answers(game, _max_words) when game.puzzle.guesses == [] do
+    "You haven't made a guess yet!"
+  end
+  def available_answers(game, max_words) do
+    possible_words(game)
+    |> inspect([limit: max_words, as_strings: true])
+    |> String.replace("\"", "")
+    |> String.slice(1..-2//1)
+  end
+
+  @doc """
   Returns a list of words that might be the answer for the game
 
   ## Examples
@@ -241,28 +263,20 @@ defmodule Subtle.Game do
     ["paddy", "paler", "papal", "paper", "parer", "parka", "parry", "payee",
     "payer"]
   """
-  def available_words(game) do
+  def possible_words(game) do
     with true <- has_guessed?(game) do
       PuzzleDictionary.dictionary
-      |> Enum.filter(&String.match?(&1, build_regex(game)))
+      |> Enum.filter(&String.match?(&1, guess_regex(game)))
     else
       false -> []
     end
-  end
-
-  def available_words_as_string(game, max_words \\ 10) do
-    # use inspect to print some words into a string
-    available_words(game)
-    |> inspect([limit: max_words, as_strings: true])
-    |> String.replace("\"", "")
-    |> String.slice(1..-2//1)
   end
 
   @doc """
   Returns a regex for the game that can be used to find
   compatible words
   """
-  def build_regex(game, _level \\ :simple) do
+  def guess_regex(game, _level \\ :simple) do
     # We need to build up a sequence of 5 matches
     # 1) for each :correct slot we put that letter
     #   {"a", :correct} --> "[a]"
