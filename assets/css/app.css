@@ -50,6 +50,17 @@
   div .gamebox {
     @apply flex flex-col flex-nowrap rounded-lg p-4 justify-center bg-slate-900/90;
   }
+  div .gamebox .message {
+    @apply text-center mb-4 text-xl font-medium text-zinc-200;
+  }
+  div .gamebox .actions {
+    @apply flex flex-row justify-center gap-x-1;
+  }
+  div .actions button {
+    @apply mb-4 bg-blue-700 hover:bg-blue-600 text-zinc-200 font-bold py-2 px-4 rounded items-center;
+  }
+
+
   /* the guesses */
 
   div .guesses {
@@ -71,7 +82,11 @@
   }
   div .legend p.wrong_p,
   div .guessbox p.wrong_p {
-    @apply bg-yellow-400;
+    @apply bg-yellow-500;
+  }
+  div .legend p.input,
+  div .guessbox p.input {
+    @apply bg-cyan-700;
   }
   div .guessbox p.none {
     @apply bg-sky-500;
@@ -104,10 +119,10 @@
   }
   div .legend p.unused,
   div .keybox p.unused {
-    @apply bg-slate-700;
+    @apply bg-slate-800;
   }
   div .keybox p.wrong_l {
-    @apply bg-zinc-800;
+    @apply bg-zinc-600;
   }
   div .legend p.none,
   div .keybox p.none {

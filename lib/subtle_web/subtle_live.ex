@@ -26,8 +26,8 @@ defmodule SubtleWeb.SubtleLive do
     ~H"""
     <div class="app_header">
       <div class="flex justify-start gap-x-2">
-        <.hero_modal_button modal_id="legend-modal" icon="hero-list-bullet" />
-        <.hero_modal_button modal_id="help-modal" icon="hero-question-mark-circle" />
+        <.hero_modal_button modal_id="legend-modal" icon="hero-question-mark-circle" />
+        <.hero_modal_button modal_id="help-modal" icon="hero-book-open" />
       </div>
       <h1>Subtle</h1>
       <div class="flex justify-end gap-x-2">
@@ -70,22 +70,33 @@ defmodule SubtleWeb.SubtleLive do
 
 
     <div class="grid grid-flow-row gap-y-4">
-      <div class="relative flex rounded-lg p-2 bg-slate-700/50">
 
-        <%= if Game.state(@game) == :playing do %>
-          <.guess_form message={@game.message} guess={@guess} />
-        <% else %>
-          <.game_over message={@game.message} answer={Game.answer(@game)} />
-        <% end %>
-      </div>
-
-      <div class="gamebox">
-        <SubtleComponents.guesses game={@game} />
+      <div class="gamebox" phx-window-keyup="letterpress">
+        <div class="message">
+          <p><%= @message %></p>
+        </div>
+        <div class="actions">
+          <button class={if Game.is_playing?(@game), do: "hidden"}
+            phx-click="new_game">
+            New Game
+            <.icon name="hero-arrow-right-circle-mini" class="ml-1 w-6 h-6" />
+          </button>
+        </div>
+        <SubtleComponents.guesses game={@game} guess={@guess} />
         <SubtleComponents.letters_used letters={Game.letters_used(@game)} />
       </div>
 
     </div>
     """
+#
+#<div class="relative flex rounded-lg p-2 bg-slate-700/50">
+#<%= if Game.state(@game) == :playing do %>
+#  <.guess_form message={@game.message} guess={@guess} />
+#<% else %>
+#  <.game_over message={@game.message} answer={Game.answer(@game)} />
+#<% end %>
+#</div>
+#
 #      <%= render_legend(assigns) %>
       #    <p class="mt-30 text-zinc-200"> <%= Game.summary @game %> </p>
   end
@@ -188,35 +199,72 @@ defmodule SubtleWeb.SubtleLive do
     end
   end
 
-  def handle_event("guess", %{"guess" => guess}, socket) do
+#  def handle_event("guess", %{"guess" => guess}, socket) do
+#    guess =
+#      guess
+#      |> String.trim
+#      |> String.downcase
+#
+#    # !! hack gets us true/false from nil, "true"
+##    verify = !!Map.get(params, "verify", false)
+##    game = %{socket.assigns.game | verify_guesses: verify}
+#    game = socket.assigns.game
+##    IO.inspect(guess, label: "guess")
+##    IO.inspect(verify, label: "verify")
+##    IO.inspect(game)
+#
+#    with {:ok, game} <- Game.make_guess(game, guess) do
+#      {:noreply, assign(socket, game: game)}
+#    else
+#      # opportunity to set some error assigns
+#      {:error, game} ->
+#        {:noreply, assign(socket, game: game)}
+#    end
+#  end
+
+  def handle_event("guess", _params, socket) do
     guess =
-      guess
+      socket.assigns.guess
       |> String.trim
       |> String.downcase
 
-    # !! hack gets us true/false from nil, "true"
-#    verify = !!Map.get(params, "verify", false)
-#    game = %{socket.assigns.game | verify_guesses: verify}
-    game = socket.assigns.game
-#    IO.inspect(guess, label: "guess")
-#    IO.inspect(verify, label: "verify")
-#    IO.inspect(game)
-
-    with {:ok, game} <- Game.make_guess(game, guess) do
-      {:noreply, assign(socket, game: game)}
+    with {:ok, game} <- Game.make_guess(socket.assigns.game, guess) do
+      {:noreply,
+        assign(socket,
+          guess: "",
+          message: game.message,
+          game: game)}
     else
       # opportunity to set some error assigns
       {:error, game} ->
-        {:noreply, assign(socket, game: game)}
+        {:noreply,
+          assign(socket,
+            guess: "",
+            message: game.message,
+            game: game)}
     end
   end
 
-  def handle_event("guesspress", _params, socket) do
-    {:noreply, socket}  #maybe something later
+  def handle_event("letterpress", %{"key" => "Enter"} = params, socket) do
+    handle_event("guess", params, socket)
+  end
+
+  def handle_event("backspace", _params, socket) do
+    {:noreply, assign(socket,
+      guess: String.slice(socket.assigns.guess, 0..-2)
+    )}
+  end
+
+  def handle_event("letterpress", %{"key" => "Backspace"} = _params, socket) do
+    {:noreply, assign(socket,
+      guess: String.slice(socket.assigns.guess, 0..-2)
+    )}
   end
 
   def handle_event("letterpress", %{"key" => letter} = _params, socket) do
-    guess = Map.get(socket.assigns, :guess, "") <> letter
+    guess =
+      Map.get(socket.assigns, :guess, "") <> letter
+      |> String.slice(0..4)
     {:noreply, assign(socket, guess: guess)}
   end
 
@@ -226,13 +274,24 @@ defmodule SubtleWeb.SubtleLive do
   end
 
   def handle_event("new_game", _params, socket) do
-    {:noreply, assign(socket, game: Game.new())}
+    game = Game.new()
+    {:noreply,
+      assign(socket,
+        guess: "",
+        message: game.message,
+        game: game)}
   end
 
   def handle_event("give_up", _params, socket) do
-    {:noreply, assign(socket, game: Game.game_over_man(socket.assigns.game))}
+    game = Game.game_over_man(socket.assigns.game)
+    {:noreply,
+      assign(socket,
+        guess: "",
+        message: game.message,
+        game: game)}
   end
 
+  # I'm not sure why these aren't in the Kernel, or if I'm missing something
   defp to_boolean("true"), do: true
   defp to_boolean(_), do: false
 

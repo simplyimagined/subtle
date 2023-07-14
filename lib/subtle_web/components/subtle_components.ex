@@ -9,11 +9,12 @@ defmodule SubtleWeb.SubtleComponents do
   alias Subtle.Game
 
   attr :game, :map, required: true
+  attr :guess, :string, required: true
 
   def guesses(assigns) do
     ~H"""
     <div class="guesses">
-      <%= for result <- Game.live_guess_results(@game) do %>
+      <%= for result <- Game.live_guess_results(@game, @guess) do %>
         <.guess_row guess={result} />
       <% end %>
       <p class="text-zinc-200 ml-3"> <%= Game.guesses_remaining(@game) %> guesses remaining </p>
@@ -37,7 +38,6 @@ defmodule SubtleWeb.SubtleComponents do
   attr :hint, :atom, values: [:correct, :wrong_letter, :wrong_position, :none], default: :none
 
   def guess_box(assigns) do
-    IO.inspect(assigns, label: "guess_box")
     ~H"""
     <div class="guessbox">
       <p class={box_class(@hint)}><%= @letter %></p>
@@ -52,6 +52,7 @@ defmodule SubtleWeb.SubtleComponents do
       :wrong_position -> "wrong_p"
       :used -> "used"
       :unused -> "unused"
+      :input -> "input"
       :none -> "none"
     end
   end
@@ -62,11 +63,11 @@ defmodule SubtleWeb.SubtleComponents do
       <.key_row keys={~w[q w e r t y u i o p]} letters={@letters} />
       <.key_row keys={~w[a s d f g h j k l]} letters={@letters} />
       <div class="bottom_row">
-        <button>
+        <button phx-click="guess">
           Guess
         </button>
         <.key_row keys={~w[z x c v b n m]} letters={@letters} />
-        <button>
+        <button phx-click="backspace">
           <CoreComponents.icon name="hero-backspace" />
         </button>
       </div>

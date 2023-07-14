@@ -11,6 +11,9 @@ defmodule Subtle.Game do
     message: ""
   ]
 
+  @doc """
+  Create a new puzzle
+  """
   def new() do
     Game.new(PuzzleDictionary.random_word())
   end
@@ -28,21 +31,65 @@ defmodule Subtle.Game do
 
   def message(game), do: game.message
 
+  def is_playing?(game), do: game.puzzle.state == :playing
   def state(game), do: game.puzzle.state
   def answer(game), do: game.puzzle.answer
+  def guesses_remaining?(game), do: Puzzle.guesses_remaining?(game.puzzle)
   def guesses_remaining(game), do: Puzzle.guesses_remaining(game.puzzle)
   def has_guessed?(game), do: Puzzle.has_guessed?(game.puzzle)
   def summary(game), do: Puzzle.summary(game.puzzle)
 
+  # we don't use this for the live view, but it might be useful for another view
   def guesses(game), do: Puzzle.normalized_guesses(game.puzzle)
 
-  def live_guess_results(game) do
-    # pull out just the results, place them in %{letter:, hint:}
-    # easy path, later want to work guess in
-    Puzzle.normalized_guesses(game.puzzle)
+  @doc """
+  Returns game state for the live view to display.
+    [
+      [%{letter: "a", hint: :correct}, ...],  # guess
+      ...                                     # other guesses
+      [%{letter: "x", hint: :input}, ...],    # current input
+      [%{letter: " ", hint: :none}, ...],     # empty rows
+      ...
+    ]
+  """
+  def live_guess_results(game, guess) do
+    # results =
+    #   guess_rows, input_row, filler_rows
+    word_len = game.puzzle.word_length
+    Enum.concat([
+      guess_rows(game.puzzle.guesses),        # guesses
+      (if guesses_remaining?(game),           # input (or nothing)
+        do: [input_row(guess, word_len)],
+        else: []
+      ),
+      List.duplicate(pad_row([], word_len),   # any empty rows
+        max(guesses_remaining(game) - 1, 0))
+    ])
+  end
+
+  @doc false
+  def guess_rows(guesses) do
+    # pull out just the results, place them in %{letter:, hint:} map
+    guesses
     |> Enum.map(fn %Guess{guess: _guess, results: results} ->
           Enum.map(results, fn {letter, hint} -> %{letter: letter, hint: hint} end)
         end )
+  end
+
+  @doc false
+  def input_row(guess, count) do
+    guess_letters = String.graphemes(guess)
+
+    guess_letters
+    |> Enum.map(fn letter -> %{letter: letter, hint: :input} end)
+    |> pad_row(count)
+  end
+
+  @doc false
+  def pad_row(cells, count) do
+    fill_count = count - Enum.count(cells)
+    Enum.concat(cells,
+      List.duplicate(%{letter: " ", hint: :none}, fill_count))
   end
 
   @doc """
