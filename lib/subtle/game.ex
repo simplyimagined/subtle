@@ -43,7 +43,7 @@ defmodule Subtle.Game do
   def guesses(game), do: Puzzle.normalized_guesses(game.puzzle)
 
   @doc """
-  Returns game state for the live view to display.
+  Transforms game state for the live view to display.
     [
       [%{letter: "a", hint: :correct}, ...],  # guess
       ...                                     # other guesses
@@ -53,39 +53,51 @@ defmodule Subtle.Game do
     ]
   """
   def live_guess_results(game, guess) do
-    # results =
-    #   guess_rows, input_row, filler_rows
-    word_len = game.puzzle.word_length
-    Enum.concat([
-      guess_rows(game.puzzle.guesses),        # guesses
-      (if guesses_remaining?(game),           # input (or nothing)
-        do: [input_row(guess, word_len)],
-        else: []
-      ),
-      List.duplicate(pad_row([], word_len),   # any empty rows
-        max(guesses_remaining(game) - 1, 0))
-    ])
+    guess_rows(game)            # existing guesses
+    |> input_row(game, guess)   # input (or nothing)
+    |> empty_rows(game)         # any empty rows
   end
 
-  @doc false
-  def guess_rows(guesses) do
+  @doc """
+  Get any existing guesses and convert them to display rows
+  """
+  def guess_rows(game) do
     # pull out just the results, place them in %{letter:, hint:} map
-    guesses
+    game.puzzle.guesses
     |> Enum.map(fn %Guess{guess: _guess, results: results} ->
           Enum.map(results, fn {letter, hint} -> %{letter: letter, hint: hint} end)
         end )
   end
 
-  @doc false
-  def input_row(guess, count) do
-    guess_letters = String.graphemes(guess)
+  @doc """
+  Convert the (partial) guess into a special row
+  """
+  def input_row(guess_rows, game, guess) do
+    if guesses_remaining?(game) do
+      this_row =
+        String.graphemes(guess)
+        |> Enum.map(fn letter -> %{letter: letter, hint: :input} end)
+        |> pad_row(game.puzzle.word_length)
 
-    guess_letters
-    |> Enum.map(fn letter -> %{letter: letter, hint: :input} end)
-    |> pad_row(count)
+      Enum.concat(guess_rows, [this_row])   # must wrap in a list
+    else
+      guess_rows
+    end
   end
 
-  @doc false
+  @doc """
+  Return enough empty rows to pad the bottom of the display
+  """
+  def empty_rows(game_rows, game) do
+    Enum.concat(game_rows,
+      List.duplicate(pad_row([], game.puzzle.word_length),   # any empty rows
+        max(guesses_remaining(game) - 1, 0))
+    )
+  end
+
+  @doc """
+  Return a full or partial row of empty cells
+  """
   def pad_row(cells, count) do
     fill_count = count - Enum.count(cells)
     Enum.concat(cells,
