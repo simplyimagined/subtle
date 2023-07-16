@@ -89,7 +89,8 @@
     @apply bg-cyan-700;
   }
   div .guessbox p.none {
-    @apply bg-sky-500;
+/*    @apply bg-sky-500;*/
+    @apply bg-sky-800;
   }
 
   /* the key display */
@@ -109,7 +110,7 @@
     @apply flex flex-row justify-center gap-x-1;
   }
   div .bottom_row button {
-    @apply basis-20 bg-slate-800 uppercase py-0 text-base h-8 md:h-14 items-center font-semibold text-zinc-200 rounded-md border border-zinc-200;
+    @apply basis-20 bg-sky-800 uppercase py-0 text-base h-8 md:h-14 items-center font-semibold text-zinc-200 rounded-md border border-zinc-200;
   }
 
 
