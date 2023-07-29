@@ -1,5 +1,13 @@
 # Subtle
 
+An extremely subtle excercise in learning Elixir LiveView
+
+This was a learning excercise to practice what I'd learned from several books without the training wheels. Any resemblance to a well-known game is somewhat intentional, though I've never actually played it. Only a few words were harmed in the making of this word game.
+
+This code is a learning excercise only and written by me.
+
+## Try it locally
+
 To start your Phoenix server:
 
   * Run `mix setup` to install and setup dependencies
@@ -7,12 +15,3 @@ To start your Phoenix server:
 
 Now you can visit [`localhost:4000`](http://localhost:4000) from your browser.
 
-Ready to run in production? Please [check our deployment guides](https://hexdocs.pm/phoenix/deployment.html).
-
-## Learn more
-
-  * Official website: https://www.phoenixframework.org/
-  * Guides: https://hexdocs.pm/phoenix/overview.html
-  * Docs: https://hexdocs.pm/phoenix
-  * Forum: https://elixirforum.com/c/phoenix-forum
-  * Source: https://github.com/phoenixframework/phoenix
