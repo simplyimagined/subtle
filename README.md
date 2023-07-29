@@ -2,7 +2,7 @@
 
 An extremely subtle excercise in learning Elixir LiveView
 
-This was a learning excercise to practice what I'd learned from several books without the training wheels. Any resemblance to a well-known game is somewhat intentional, though I've never actually played it. Only a few words were harmed in the making of this word game.
+This was written to practice and test what I've learned from several books while removing the training wheels. Any resemblance to a well-known game is somewhat intentional, though I've never actually played it. Only a few words were harmed in the making of this word game.
 
 This code is a learning excercise only and written by me.
 
