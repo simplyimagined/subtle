@@ -8,13 +8,15 @@ defmodule Subtle.Guess do
   @enforce_keys [:guess]
   defstruct [:guess, :results]
 
+  @doc false
   def new(guess, results) do
     %Guess{guess: guess, results: results}
   end
 
   @doc"""
   Return an empty guess for the answer.
-  This can be used to fill a partial puzzle.
+
+  This is a list of {" ", :none} tuples which can be used to fill a partial puzzle.
   """
   def empty_guess(count) when is_integer(count) do
     guess = new(String.duplicate(" ", count),
@@ -22,9 +24,12 @@ defmodule Subtle.Guess do
 
     {:ok, guess}
   end
-  def empty_guess(_count), do: {:error, :invalid_arguments}
 
-#I have no idea how to typedef what I want, so dynamic it is!
+  def empty_guess(_count) do
+    {:error, :invalid_arguments}
+  end
+
+#REVIEW: I have no idea how to typedef what I want, so dynamic it is!
  # @letter_position [:correct, :wrong_position, :wrong_letter, :none]
 
 #  @type guess_result_tuple :: {
@@ -62,10 +67,11 @@ defmodule Subtle.Guess do
         }}
   """
   def guess_word(guess, answer)
-  when is_binary(guess) and is_binary(answer) and guess == answer
+    when is_binary(guess) and is_binary(answer) and guess == answer
   do
     {:ok, :correct, new(answer, compare_letters(answer))}
   end
+
   def guess_word(guess, answer) when is_binary(guess) and is_binary(answer)
   do
     answer_len = String.length(answer)
@@ -74,12 +80,14 @@ defmodule Subtle.Guess do
       _           -> {:error, :invalid_length}
     end
   end
+
   def guess_word(_guess, _answer) do
     {:error, :invalid_arguments}
   end
 
   @doc """
-  compare_letters/2
+  This returns a list of tuples for each letter of the guess, indicating if
+  the letter is correct, in the wrong position, or an incorrect letter.
 
   ## Examples
       # guess apple for paper
@@ -99,8 +107,8 @@ defmodule Subtle.Guess do
     # {"a", "p"}, %{"a" => 1, "e" => 1, "p" => 2, "r" => 1} -> {"a", :wrong_position}
     # {"p", "a"}, %{"a" => 0, "e" => 1, "p" => 2, "r" => 1} -> {"p", :wrong_position}
     # {"p", "p"}, %{"a" => 0, "e" => 1, "p" => 1, "r" => 1} -> {"p", :correct}
-    # {"l", "e"}, %{"a" => 0, "e" => 1, "p" => 0, "r" => 1} -> {"p", :wrong_letter}
-    # {"e", "r"}, %{"a" => 0, "e" => 1, "p" => 0, "r" => 1} -> {"p", :wrong_position}
+    # {"l", "e"}, %{"a" => 0, "e" => 1, "p" => 0, "r" => 1} -> {"l", :wrong_letter}
+    # {"e", "r"}, %{"a" => 0, "e" => 1, "p" => 0, "r" => 1} -> {"e", :wrong_position}
     #
     # answers =
     #   [{"a", :wrong_position}, {"p", :wrong_position}, {"p", :correct},
@@ -115,11 +123,11 @@ defmodule Subtle.Guess do
           fn pair, counts -> process_letter_pair(pair, counts) end)
 
     # If we see a correct letter in the wrong position before the
-    # correct postion we can incorrectly mark it as :wrong_position.
+    # correct postion we might incorrectly mark it as :wrong_position.
     # In the case of "rigid" for "strip" the first 'i' gets marked as
     # :wrong_position when it should be :wrong_letter.
     #
-    # Go through the answers, removing underflows
+    # To fix this go through the answers, removing underflows
     # "rigid" for "strip", first 'i' should be :wrong_letter
     {adjusted, _adjusted_counts} =
       Enum.map_reduce(answers, counts,
@@ -129,11 +137,14 @@ defmodule Subtle.Guess do
     # return only the answers, not the counts
     adjusted
   end
-  def compare_letters(answer), do: compare_letters(answer, answer)
 
-  # Any :wrong_position tuple with an underflow will be changed
-  # to :wrong_letter and the counts adjusted
+  def compare_letters(answer) do
+    compare_letters(answer, answer)
+  end
+
   @doc false
+  # Any :wrong_position tuple with an underflow will be changed to a
+  # :wrong_letter tuple and the counts adjusted
   def remove_underflows({letter, :wrong_position} = letter_position, counts) do
     count = Map.get(counts, letter)
     if count < 0 do
@@ -142,20 +153,23 @@ defmodule Subtle.Guess do
       {letter_position, counts}
     end
   end
+
   def remove_underflows(letter_position, counts) do
     {letter_position, counts}
   end
 
   @doc """
-  process_letter_pair/2
+  This compares two letters, one in the guess the other in the puzzle.
+  The return is a tuple containing the letter, a comparison results,
+  and a map similar to that returned by Enum.frequencies().
 
   ## Examples
       # guess apple for paper, first char
       iex> Guess.process_letter_pair("a", "p", letter_counts(paper))
-      {"a", :wrong_position}
+      {"a", :wrong_position, adjusted_counts}
       # guess apple for paper, third char
       iex> Guess.process_letter_pair("p", "p", letter_counts(paper))
-      {"p", :correct}
+      {"p", :correct, adjusted_counts}
 
   """
   def process_letter_pair({_a, _b} = pair, counts) do
@@ -178,8 +192,9 @@ defmodule Subtle.Guess do
   defp compare_letter_pair({a, b}) when a == b, do: {a, :correct}
   defp compare_letter_pair({a, _b}), do: {a, :miss}
 
-   @doc """
-  letter_counts/1
+  @doc """
+  This returns a map of letter counts obtained by passing the word
+  through Enum.frequencies().
 
   ## Examples
 
@@ -191,14 +206,15 @@ defmodule Subtle.Guess do
     word
     |> String.graphemes()
     |> Enum.frequencies()
-# I reinvented Enum.frequencies!
+# HISTORY: I reinvented Enum.frequencies!
+# (I like to discover existing functions in the library and yank my code.)
 #    |> Enum.reduce(%{}, fn char, acc ->
 #          Map.put(acc, char, (acc[char] || 0) + 1)
 #        end)
   end
 
-   @doc """
-  reduce_letter_count/2
+  @doc """
+  This takes a "frequencies" letter map and reduces the count of the given letter.
 
   ## Examples
 
