@@ -5,7 +5,7 @@ defmodule Subtle.Puzzle do
 
   alias Subtle.{Puzzle, Guess, PuzzleDictionary}
 
-  # don't change word length since we only have 5 letter words in dict
+  # Don't change word length since we only have 5 letter words in the dictionary.
   @word_length 5
   @max_guesses 6
 
@@ -24,6 +24,7 @@ defmodule Subtle.Puzzle do
   def new() do
     Puzzle.new(PuzzleDictionary.random_word())
   end
+
   def new(answer) do
     %Puzzle{  state: :playing,
               word_length: @word_length,
@@ -48,25 +49,21 @@ defmodule Subtle.Puzzle do
   Verify that a guess meets the rules.
   Possible return values:
       # Isn't a string
-      {:error, puzzle, :invalid_arguments}
+      {:error, :invalid_arguments}
 
       # length is wrong
-      {:error, puzzle, :invalid_length}
+      {:error, :invalid_length}
 
       # game state isn't :playing
-      {:error, puzzle, :game_over}
+      {:error, :game_over}
 
       # word not in our game dictionary
-      {:error, puzzle, :invalid_word}
+      {:error, :invalid_word}
 
       # all is well
       {:ok, puzzle}
   """
   def verify_guess(%Puzzle{state: :playing} = puzzle, guess) do
-    # check is string
-    # check length
-    # check game status
-    # verify word in dict
     with  true <- is_binary(guess),
           {:ok, @word_length} <- verify_guess_length(guess),
           {:dict, true} <- {:dict, PuzzleDictionary.verify_word(guess)}
@@ -83,7 +80,10 @@ defmodule Subtle.Puzzle do
         {:error, :baby_dont_hurt_me}
     end
   end
-  def verify_guess(_puzzle, _guess), do: {:error, :game_over}
+
+  def verify_guess(_puzzle, _guess) do
+    {:error, :game_over}
+  end
 
   defp verify_guess_length(guess) do
     if (Enum.count(String.graphemes(guess)) == @word_length),
@@ -99,31 +99,39 @@ defmodule Subtle.Puzzle do
   """
   def make_guess(%Puzzle{state: :playing} = puzzle, guess) do
     case Guess.guess_word(guess, puzzle.answer) do
+      # Correct guess will transition the puzzle to :game_won
       {:ok, :correct, guess_result} ->
-        # correct guess will transition the puzzle to :game_won
         {:ok, puzzle
               |> change_state(:game_won)
               |> add_result(guess_result)}
+      # Incorrect guess will update the puzzle and check for :game_over
       {:ok, :incorrect, guess_result} ->
-        # incorrect guess will update the puzzle and check for :game_over
         case last_guess?(puzzle) do
           true ->
             {:ok, puzzle
                   |> change_state(:game_over)
                   |> add_result(guess_result)}
           false ->
-            {:ok, puzzle
-                  |> add_result(guess_result)}
+            {:ok, add_result(puzzle, guess_result)}
         end
-      # don't pass in garbage!
-      #TODO: I don't think I need to check for this, it should just be returned
+      # Don't pass in garbage!
       {:error, :invalid_length} -> {:error, :invalid_length}
       {:error, _} -> {:error, :baby_dont_hurt_me}
     end
   end
-  def make_guess(_puzzle, _guess), do: {:error, :game_over}
 
+  def make_guess(_puzzle, _guess) do
+    {:error, :game_over}
+  end
+
+  @doc """
+  Allows easy state changing. (Not even sure this should be a fn)
+  """
   def change_state(puzzle, state), do: %{puzzle | state: state}
+
+  @doc """
+  Append a guess onto our list of guesses.
+  """
   def add_result(puzzle, result) do
     %{puzzle | guesses: puzzle.guesses ++ [result]}
   end
@@ -158,12 +166,14 @@ defmodule Subtle.Puzzle do
   end
 
   @doc"""
-  Returns a list of guesses, padded with empty guesses
+  Returns a list (max_guesses long) of existing guesses padded with empty guesses
   """
   def normalized_guesses(puzzle) do
     Enum.concat(puzzle.guesses, empty_guesses(puzzle))
   end
 
+  @doc false
+  # This just pads out the list of guesses for normalized_guesses/1
   def empty_guesses(puzzle) do
     {:ok, result} = Guess.empty_guess(puzzle.word_length)
     List.duplicate(result, Puzzle.guesses_remaining(puzzle))
@@ -200,18 +210,23 @@ defmodule Subtle.Puzzle do
       Enum.reduce(puzzle.guesses, "[",
         fn %Guess{} = guess,
           acc -> acc <> guess_summary(guess.results) <> ", " end)
+
     String.replace_suffix(summary, ", ", "") <> "]"
   end
+
   defp guess_summary(results) do
-    Enum.reduce(results, "",
+    Enum.reduce(
+      results,
+      "",
       fn {_l, _p} = result, acc -> acc <> result_summary(result) end)
   end
+
   defp result_summary({letter, position}) do
     case position do
-      :correct -> letter
+      :correct        -> letter
       :wrong_position -> "~" <> letter
-      :wrong_letter -> "!" <> letter
-      _ -> "."
+      :wrong_letter   -> "!" <> letter
+      _               -> "."
     end
   end
 
