@@ -124,7 +124,6 @@ defmodule Subtle.Puzzle do
   def make_guess(_puzzle, _guess), do: {:error, :game_over}
 
   def change_state(puzzle, state), do: %{puzzle | state: state}
-  def change_message(puzzle, message), do: %{puzzle | message: message}
   def add_result(puzzle, result) do
     %{puzzle | guesses: puzzle.guesses ++ [result]}
   end
