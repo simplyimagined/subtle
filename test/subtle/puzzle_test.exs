@@ -10,6 +10,24 @@ defmodule Subtle.PuzzleTest do
     end
   end
 
+  describe "verify_guess/2" do
+    test "garbage input" do
+      puzzle = Puzzle.new("paper")
+      assert {:error, :invalid_arguments} == Puzzle.verify_guess(puzzle, 12345)
+    end
+
+    test "wrong guess length" do
+      puzzle = Puzzle.new("paper")
+      assert {:error, :invalid_length} == Puzzle.verify_guess(puzzle, "abc")
+      assert {:error, :invalid_length} == Puzzle.verify_guess(puzzle, "abcdefg")
+    end
+
+    test "game over" do
+      puzzle = Map.put(Puzzle.new("paper"), :state, :game_over)
+      assert {:error, :game_over} == Puzzle.verify_guess(puzzle, "guess")
+    end
+  end
+
   describe "make_guess/2" do
     test "test correct guess 'paper' for 'paper'" do
       {:ok, puzzle} =
@@ -64,18 +82,18 @@ defmodule Subtle.PuzzleTest do
 
     test "guessing after game finished" do
       puzzle = %Puzzle{state: :game_over, answer: "paper", guesses: []}
-      assert {:error, _puzzle, :game_over} =
-        Puzzle.make_guess(puzzle, "guess")
-    end
-
-    test "garbage input instead of guess" do
-      assert {:error, _puzzle, :game_over} = Puzzle.make_guess(nil, 123)
+      assert {:error, :game_over} = Puzzle.make_guess(puzzle, "guess")
     end
 
     test "too long of a guess" do
       puzzle = Puzzle.new("paper")
-      assert {:error, _puzzle, :invalid_length} =
+      assert {:error, :invalid_length} =
         Puzzle.make_guess(puzzle, "really long guess")
+    end
+
+    test "garbage input instead of guess" do
+      puzzle = Puzzle.new("paper")
+      assert {:error, :baby_dont_hurt_me} = Puzzle.make_guess(puzzle, 123)
     end
   end
 
@@ -145,25 +163,6 @@ defmodule Subtle.PuzzleTest do
 
       assert Enum.count(Puzzle.empty_guesses(puzzle)) == 0
       assert Enum.count(Puzzle.normalized_guesses(puzzle)) == puzzle.max_guesses
-    end
-  end
-
-  describe "verify_guess before make_guess" do
-    test "garbage input" do
-      puzzle = Puzzle.new("paper")
-      assert {:error, puzzle, :invalid_arguments} == Puzzle.verify_guess(puzzle, 12345)
-    end
-
-    test "guess length" do
-      puzzle = Puzzle.new("paper")
-      changed = Puzzle.change_message(puzzle, "Guess must be #{puzzle.word_length} letters.")
-      assert {:error, changed, :invalid_length} == Puzzle.verify_guess(puzzle, "abc")
-      assert {:error, changed, :invalid_length} == Puzzle.verify_guess(puzzle, "abcdefg")
-    end
-
-    test "game over" do
-      puzzle = Puzzle.new("paper") |> Map.put(:state, :game_over)
-      assert {:error, puzzle, :game_over} == Puzzle.verify_guess(puzzle, "guess")
     end
   end
 
