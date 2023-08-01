@@ -8,12 +8,10 @@ defmodule Subtle.Puzzle do
   # don't change word length since we only have 5 letter words in dict
   @word_length 5
   @max_guesses 6
-  @verify_guesses true
 
   @enforce_keys [:state, :answer, :guesses]
   defstruct [
     state: :playing,
-    verify_guesses: @verify_guesses,
     word_length: @word_length,
     max_guesses: @max_guesses,
     answer: "",
@@ -28,7 +26,6 @@ defmodule Subtle.Puzzle do
   end
   def new(answer) do
     %Puzzle{  state: :playing,
-              verify_guesses: @verify_guesses,
               word_length: @word_length,
               max_guesses: @max_guesses,
               answer: answer,
@@ -41,12 +38,10 @@ defmodule Subtle.Puzzle do
   def set_rules(puzzle, opts) when is_list(opts) do
     word_length = Keyword.get(opts, :word_length, @word_length)
     max_guesses = Keyword.get(opts, :max_guesses, @max_guesses)
-    verify_guesses = Keyword.get(opts, :verify_guesses, @verify_guesses)
 
     puzzle
     |> Map.put(:word_length, word_length)
     |> Map.put(:max_guesses, max_guesses)
-    |> Map.put(:verify_guesses, verify_guesses)
   end
 
   @doc"""
