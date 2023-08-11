@@ -160,10 +160,14 @@
   }
 
   div .possible_words {
-    @apply flex flex-row flex-wrap rounded-lg bg-slate-700/50 items-baseline;
+/*    @apply flex mb-2 flex-row flex-wrap rounded-lg bg-slate-700/50 items-baseline; */
+    @apply grid grid-flow-row rounded-lg bg-slate-700/50 items-baseline;
   }
   div .possible_words h1 {
-    @apply text-lg whitespace-nowrap font-medium text-zinc-200;
+    @apply text-lg font-medium text-zinc-200;
+  }
+  div .possible_words h2 {
+    @apply mt-2 ml-2 text-base font-medium text-zinc-400;
   }
   div .possible_words p {
     @apply ml-2 text-base font-medium text-zinc-300;
@@ -195,6 +199,21 @@
   div #settings-modal-content {
     @apply flex flex-col flex-wrap gap-y-10;
   }
-  div #settings-verify-label {
-    @apply text-lg text-zinc-200;
+  div #settings-modal-content h1 {
+    @apply text-xl font-bold text-zinc-200;
+  }
+  div #settings-modal-content div {
+    @apply bg-slate-700;
+  }
+  div #settings-modal-content label {
+    @apply text-lg font-medium text-zinc-200;
+  }
+  div #settings-modal-content select {
+    @apply rounded-full w-72 pl-6 bg-zinc-200 text-zinc-700 text-lg font-medium;
+  }
+  div settings-modal-content button {
+    @apply flex-none;
+  }
+  div #settings-modal-content #caption {
+    @apply text-base font-medium text-zinc-300;
   }
