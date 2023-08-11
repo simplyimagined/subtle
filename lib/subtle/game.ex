@@ -241,15 +241,22 @@ defmodule Subtle.Game do
     Game.process_guesses
     "paddy, paler, papal, paper, parer, parka, parry, payee, payer, ..."
   """
-  def available_answers(game, max_words \\ 10)
-  def available_answers(game, _max_words) when game.puzzle.guesses == [] do
+  # guidance is :simple | :intermediate
+  @answer_defaults %{max_words: 10, guidance: :simple}
+
+  def available_answers(game, options \\ [])
+
+  def available_answers(game, _options) when game.puzzle.guesses == [] do
     "You haven't made a guess yet!"
   end
-  def available_answers(game, max_words) do
-    Possibles.possible_words(game)
+
+  def available_answers(game, options) do
+    %{max_words: max_words, guidance: guidance} = Enum.into(options, @answer_defaults)
+
+    Possibles.possible_words(game, guidance)
     |> inspect([limit: max_words, as_strings: true])
     |> String.replace("\"", "")
-    |> String.slice(1..-2//1)
+    |> String.slice(1..-2//1)     # remove the trailing ", "
   end
 
 end
