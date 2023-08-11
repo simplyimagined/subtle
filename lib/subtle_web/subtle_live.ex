@@ -9,10 +9,10 @@ defmodule SubtleWeb.SubtleLive do
     {:ok, assign(socket,
                   page_title: "Subtle",
                   session_id: session["live_socket_id"],
+                  settings: %{"verify" => "true", "guidance" => "simple"},
                   game: Game.new(),
                   message: "Subtle",
-                  guess: "",
-                  settings: to_form(%{"verify" => true})
+                  guess: ""
                 )}
   end
 
@@ -42,9 +42,11 @@ defmodule SubtleWeb.SubtleLive do
     <.subtle_modal id="help-modal">
       <div class="possible_words">
         <h1>Possible words:</h1>
-        <p><%= Game.available_answers(@game, 20) %></p>
+        <p><%= Game.available_answers(@game, [max_words: 20, guidance: to_guidance(@settings["guidance"])]) %></p>
+        <h2>(<%= display_guidance(@settings["guidance"]) %>)</h2>
       </div>
     </.subtle_modal>
+
     <.subtle_modal id="quit-modal">
       <form class="give_up" phx-submit="give_up">
         <h1>Game over, man!</h1>
@@ -55,17 +57,9 @@ defmodule SubtleWeb.SubtleLive do
         </.button>
       </form>
     </.subtle_modal>
+
     <.modal id="settings-modal">
-      <.form for={@settings} phx-submit="settings">
-        <.input type="checkbox" id="settings-verify"
-            field={@settings[:verify]}
-            label="Require guess to be in the dictionary"
-            checked={@game.verify_guesses} />
-        <p>&nbsp;</p>
-        <.button phx-click={hide_modal("settings-modal")}>
-          Save
-        </.button>
-      </.form>
+      <.settings_form settings={@settings} />
     </.modal>
 
 
@@ -132,35 +126,62 @@ defmodule SubtleWeb.SubtleLive do
     """
   end
 
-#  attr :message, :string, required: true
-#  attr :answer, :string, default: nil
-#  attr :post, :string, default: nil
-#
-#  def pretty_message(assigns) do
-#    ~H"""
-#      <%= @message %>
-#      <%= if @answer do %>
-#        <span class="font-medium"><%= @answer %></span>
-#      <% end %>
-#      <%= if @post do %>
-#        <%= @post %>
-#      <% end %>
-#    """
-#  end
-#  defp pretty_args(msg) do
-#    with [message, answer, post] <- String.split(msg, "\"") do
-#      %{message: message, emphasize: answer, post: post}
-#    else
-#      _ -> %{message: msg}
-#    end
-#  end
-#    with 3 <- Enum.count(l) do
-#      Enum.at(l, 0) <> "<span class=\"font-bold\">" <> "\u201C" <>
-#        Enum.at(l, 1) <> "\u201D" <> "</span>" <> Enum.at(l, 2)
-#    else
-#      _ -> msg
-#    end
 
+#  <.simple_form for={@settings} phx-submit="settings">
+#  <.input type="checkbox" id="settings-verify"
+#      field={@settings[:verify]}
+#      label="Require guess to be in the dictionary"
+#      checked={to_boolean(@settings[:verify])} />
+
+#settings: %{"verify" => true, "guidance" => "simple"},
+  attr :settings, :map, required: true
+
+  def settings_form(assigns) do
+    ~H"""
+    <.simple_form
+      :let={f}
+      for={to_form(@settings)}
+      phx-submit="settings-save"
+    >
+      <h1>Settings:</h1>
+      <.input type="checkbox"
+        id="verify"
+        field={f["verify"]}
+        label="Require guess to be in the dictionary"
+      />
+      <.input type="select"
+        id="guidance"
+        field={f["guidance"]}
+        options={["Minimal": "simple", "Advanced": "advanced"]}
+        label="How much help would you like?"
+      />
+      <p id="caption">
+        Minimal filtering will show words containing correct letters and
+        filters out words with incorrect letters. Advanced filtering narrows
+        this to words containing required letters, as well.
+      </p>
+      <:actions>
+        <.button phx-click={hide_modal("settings-modal")}>Save</.button>
+      </:actions>
+    </.simple_form>
+    """
+#      <.button phx-click={hide_modal("settings-modal")}>
+  end
+
+#  def handle_event("settings-save", params, socket) do
+#    IO.inspect(params, label: "params")
+#    {:noreply, socket}
+#  end
+
+  def handle_event("settings-save",
+    %{"verify" => verify, "guidance" => guidance} = params, socket) do
+    IO.inspect(params, label: "params")
+
+    settings = %{"verify" => verify, "guidance" => guidance}
+    game = Game.set_verify(socket.assigns.game, to_boolean(settings["verify"]))
+
+    {:noreply, assign(socket, settings: settings, game: game)}
+  end
 
   def handle_event("guess", _params, socket) do
     guess =
@@ -208,11 +229,6 @@ defmodule SubtleWeb.SubtleLive do
     {:noreply, assign(socket, guess: guess)}
   end
 
-  def handle_event("settings", %{"verify" => verify} = _params, socket) do
-    game = Game.set_verify(socket.assigns.game, to_boolean(verify))
-    {:noreply, assign(socket, game: game)}
-  end
-
   def handle_event("new_game", _params, socket) do
     game = Game.new()
     {:noreply,
@@ -235,4 +251,13 @@ defmodule SubtleWeb.SubtleLive do
   defp to_boolean("true"), do: true
   defp to_boolean(_), do: false
 
+  # We use this to cast "simple"|"advanced" to :simple|:intermediate
+  defp to_guidance("simple"), do: :simple
+  defp to_guidance("advanced"), do: :intermediate
+
+  defp display_guidance("simple"), do: "minimal filtering – using correct and incorrect letters only"
+  defp display_guidance("advanced"), do: "advanced filtering – using correct, incorrect, and required letters"
+  defp display_guidance(bob) do
+    IO.inspect(bob, label: "display_guindance unknown")
+  end
 end
