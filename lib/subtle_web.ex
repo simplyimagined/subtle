@@ -17,7 +17,7 @@ defmodule SubtleWeb do
   those modules here.
   """
 
-  def static_paths, do: ~w(assets fonts images favicon.ico apple-touch-icon.png favicon-32x32.png favicon-16x16.png manifest.json robots.txt)
+  def static_paths, do: ~w(assets fonts images favicon.ico apple-touch-icon.png favicon-32x32.png favicon-16x16.png manifest.json android-chrome-192x192.png android-chrome-256x256.png safari-pinned-tab.svg robots.txt)
 
   def router do
     quote do
