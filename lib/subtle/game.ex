@@ -12,11 +12,8 @@ defmodule Subtle.Game do
   ]
 
   @doc """
-  Create a new puzzle
+  Create a new game with a new puzzle.
   """
-  def new() do
-    Game.new(PuzzleDictionary.random_word())
-  end
   def new(answer) do
     %Game{
       verify_guesses: @verify_guesses,
@@ -25,12 +22,23 @@ defmodule Subtle.Game do
     }
   end
 
+  def new() do
+    Game.new(PuzzleDictionary.random_word())
+  end
+
+  @doc """
+  Allows the verify flag to be toggled, as when the user wants to enter
+  disallowed words.
+  """
   def set_verify(game, verify) do
     Map.put(game, :verify_guesses, verify)
   end
 
+  @doc false
   def message(game), do: game.message
 
+  # These are a bunch of helper functions to abstract the puzzle.
+  # I'm not sure if they're really needed.
   def is_playing?(game), do: game.puzzle.state == :playing
   def state(game), do: game.puzzle.state
   def answer(game), do: game.puzzle.answer
@@ -53,9 +61,9 @@ defmodule Subtle.Game do
     ]
   """
   def live_guess_results(game, guess) do
-    guess_rows(game)            # existing guesses
-    |> input_row(game, guess)   # input (or nothing)
-    |> empty_rows(game)         # any empty rows
+    guess_rows(game)            # rows with existing guesses
+    |> input_row(game, guess)   # row with the input (or nothing)
+    |> empty_rows(game)         # 0 or more empty rows to finish the grid
   end
 
   @doc """
@@ -70,7 +78,7 @@ defmodule Subtle.Game do
   end
 
   @doc """
-  Convert the (partial) guess into a special row
+  Convert the user's input into a special row
   """
   def input_row(guess_rows, game, guess) do
     if guesses_remaining?(game) do
@@ -86,7 +94,7 @@ defmodule Subtle.Game do
   end
 
   @doc """
-  Return enough empty rows to pad the bottom of the display
+  Return enough empty rows to pad the bottom of the game grid.
   """
   def empty_rows(game_rows, game) do
     Enum.concat(game_rows,
@@ -96,7 +104,7 @@ defmodule Subtle.Game do
   end
 
   @doc """
-  Return a full or partial row of empty cells
+  Return a full or partial row of empty cells.
   """
   def pad_row(cells, count) do
     fill_count = count - Enum.count(cells)
@@ -105,11 +113,11 @@ defmodule Subtle.Game do
   end
 
   @doc """
-  Verify that the guess would be appropriate
-  Will update the game's :message upon failure
+  Verify that the guess would be appropriate.
+  Will update the game's :message upon failure.
   Returns:
      {:ok, game} if ok to make a guess
-     {:error, game} :message contains error text
+     {:error, game} and :message contains error text
   """
   def verify_guess(game, guess) when game.verify_guesses do
     case Puzzle.verify_guess(puzzle = game.puzzle, guess) do
@@ -129,12 +137,13 @@ defmodule Subtle.Game do
                     guess_message(puzzle, :game_already_finished)) }
       end
   end
+
   def verify_guess(game, _guess) do   # we're not verifying, continue
     {:ok, game}
   end
 
   @doc """
-  Make a guess with the given word
+  Make a guess with the given word.
   Returns
     {:ok, game} if successful, :message is updated
     {:error, game} :message contains error text
@@ -171,10 +180,14 @@ defmodule Subtle.Game do
     end
   end
 
-  defp guess_message(guess, :invalid_word) do
+  @doc """
+  Return a string describing what just happened with the game.
+  """
+  def guess_message(guess, :invalid_word) do
     "Your guess, \"#{guess}\", must be in the dictionary."
   end
-  defp guess_message(puzzle, kind) do
+
+  def guess_message(puzzle, kind) do
     case kind do
       :game_won -> "You won!"
       :game_over -> "Game over! The answer was \"#{puzzle.answer}\""
@@ -193,8 +206,8 @@ defmodule Subtle.Game do
   end
 
   @doc """
-  This peril is just too perilous.
-  Game over man, I'm losing!
+  This peril is just too perilous. Game over man, I'm losing!
+  Just let me quit the game already.
   """
   def game_over_man(game) do
     game
@@ -202,14 +215,21 @@ defmodule Subtle.Game do
     |> Map.put(:message, guess_message(game.puzzle, :gave_up))
   end
 
-  # This won't work correctly as is, but close enough for fun.
-  # Ideally, we want to show letters that are in
-  # correct position, but we also need to show letter not in position.
-  # We need to do that without giving hints away, unless they uncovered it.
-  # Then we need to show used letters.
-  #
-  # Maybe for now all used letters get marked?
-  # ie, :wrong_letter and :in_puzzle, let them figure it out
+  @doc """
+  Returns a map a letters already guessed, marking them for display.
+
+  The LiveView uses this to display a color-coded "keyboard" view to convery
+  "these letters aren't in the answer" or "these letters are in the answer".
+
+  Example:
+    Given "paper" and a guess of "apple" we get
+      %{
+        "a" => [:wrong_position],
+        "e" => [:wrong_position],
+        "l" => [:wrong_letter],
+        "p" => [:correct, :wrong_position]
+      }
+  """
   def letters_used(game) do
     # 1) Go through all the letters already guessed
     # 2) Create a map with results for each letter guessed
@@ -221,6 +241,7 @@ defmodule Subtle.Game do
     |> reduce_letters()
   end
 
+  @doc false
   def reduce_letters(l) do
     # This is similar to frequencies() but accumulating results, not count
     Enum.reduce(l, %{}, fn {letter, result}, map ->
