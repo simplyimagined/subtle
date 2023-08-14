@@ -14,16 +14,14 @@ defmodule Subtle.Game do
   @doc """
   Create a new game with a new puzzle.
   """
-  def new(answer) do
+  def new(opts \\ []) do
+    answer = Keyword.get_lazy(opts, :answer, &PuzzleDictionary.random_word/0)
+
     %Game{
-      verify_guesses: @verify_guesses,
-      puzzle: Puzzle.new(answer),
+      verify_guesses: Keyword.get(opts, :verify, @verify_guesses),
+      puzzle: Puzzle.new(answer: answer),
       message: "Guess a word."
     }
-  end
-
-  def new() do
-    Game.new(PuzzleDictionary.random_word())
   end
 
   @doc """
