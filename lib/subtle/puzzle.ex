@@ -21,22 +21,18 @@ defmodule Subtle.Puzzle do
   @doc """
   Create a new puzzle
   """
-  def new() do
-    Puzzle.new(PuzzleDictionary.random_word())
-  end
-
-  def new(answer) do
-    %Puzzle{  state: :playing,
-              word_length: @word_length,
-              max_guesses: @max_guesses,
-              answer: answer,
+  def new(opts \\ []) do
+    %Puzzle{  state: opts[:state] || :playing,
+              word_length: opts[:word_length] || @word_length,
+              max_guesses: opts[:max_guesses] || @max_guesses,
+              answer: Keyword.get_lazy(opts, :answer, &PuzzleDictionary.random_word/0),
               guesses: []}
   end
 
   @doc """
   Allow changes to the rules, providing sane defaults
   """
-  def set_rules(puzzle, opts) when is_list(opts) do
+  def change_rules(puzzle, opts) when is_list(opts) do
     word_length = Keyword.get(opts, :word_length, @word_length)
     max_guesses = Keyword.get(opts, :max_guesses, @max_guesses)
 
@@ -218,10 +214,10 @@ defmodule Subtle.Puzzle do
     Enum.reduce(
       results,
       "",
-      fn {_l, _p} = result, acc -> acc <> result_summary(result) end)
+      fn {_l, _p} = result, acc -> acc <> letter_summary(result) end)
   end
 
-  defp result_summary({letter, position}) do
+  defp letter_summary({letter, position}) do
     case position do
       :correct        -> letter
       :wrong_position -> "~" <> letter

@@ -4,7 +4,7 @@ defmodule Subtle.PuzzleTest do
 
   describe "make new puzzle" do
     test "new puzzle for 'paper'" do
-      puzzle = Puzzle.new("paper")
+      puzzle = Puzzle.new(answer: "paper")
       assert puzzle.state == :playing
       assert puzzle.answer == "paper"
     end
@@ -12,18 +12,18 @@ defmodule Subtle.PuzzleTest do
 
   describe "verify_guess/2" do
     test "garbage input" do
-      puzzle = Puzzle.new("paper")
+      puzzle = Puzzle.new(answer: "paper")
       assert {:error, :invalid_arguments} == Puzzle.verify_guess(puzzle, 12345)
     end
 
     test "wrong guess length" do
-      puzzle = Puzzle.new("paper")
+      puzzle = Puzzle.new(answer: "paper")
       assert {:error, :invalid_length} == Puzzle.verify_guess(puzzle, "abc")
       assert {:error, :invalid_length} == Puzzle.verify_guess(puzzle, "abcdefg")
     end
 
     test "game over" do
-      puzzle = Map.put(Puzzle.new("paper"), :state, :game_over)
+      puzzle = Puzzle.new(answer: "paper", state: :game_over)
       assert {:error, :game_over} == Puzzle.verify_guess(puzzle, "guess")
     end
   end
@@ -31,7 +31,7 @@ defmodule Subtle.PuzzleTest do
   describe "make_guess/2" do
     test "test correct guess 'paper' for 'paper'" do
       {:ok, puzzle} =
-        Puzzle.new("paper")
+        Puzzle.new(answer: "paper")
         |> Puzzle.make_guess("paper")
       assert puzzle.state == :game_won
       assert puzzle.guesses ==
@@ -51,7 +51,7 @@ defmodule Subtle.PuzzleTest do
 
     test "test wrong guess 'apple' for 'paper'" do
       {:ok, puzzle} =
-        Puzzle.new("paper")
+        Puzzle.new(answer: "paper")
         |> Puzzle.make_guess("apple")
       assert puzzle.state == :playing
       assert puzzle.guesses ==
@@ -70,7 +70,7 @@ defmodule Subtle.PuzzleTest do
     end
 
     test "test too many guesses" do
-      puzzle = Puzzle.new("paper")
+      puzzle = Puzzle.new(answer: "paper")
       {:ok, puzzle} = Puzzle.make_guess(puzzle, "apple")
       {:ok, puzzle} = Puzzle.make_guess(puzzle, "apple")
       {:ok, puzzle} = Puzzle.make_guess(puzzle, "apple")
@@ -81,25 +81,25 @@ defmodule Subtle.PuzzleTest do
     end
 
     test "guessing after game finished" do
-      puzzle = %Puzzle{state: :game_over, answer: "paper", guesses: []}
+      puzzle = Puzzle.new(state: :game_over, answer: "paper")
       assert {:error, :game_over} = Puzzle.make_guess(puzzle, "guess")
     end
 
     test "too long of a guess" do
-      puzzle = Puzzle.new("paper")
+      puzzle = Puzzle.new(answer: "paper")
       assert {:error, :invalid_length} =
         Puzzle.make_guess(puzzle, "really long guess")
     end
 
     test "garbage input instead of guess" do
-      puzzle = Puzzle.new("paper")
+      puzzle = Puzzle.new(answer: "paper")
       assert {:error, :baby_dont_hurt_me} = Puzzle.make_guess(puzzle, 123)
     end
   end
 
   describe "test guess counts" do
     test "guesses_remaining? and guesses_remaining" do
-      puzzle = Puzzle.new("paper")
+      puzzle = Puzzle.new(answer: "paper")
       assert Puzzle.guesses_remaining?(puzzle) == true
       assert Puzzle.guesses_remaining(puzzle) == puzzle.max_guesses
 
@@ -119,7 +119,7 @@ defmodule Subtle.PuzzleTest do
     end
 
     test "last_guess?" do
-      puzzle = Puzzle.new("paper")
+      puzzle = Puzzle.new(answer: "paper")
       assert Puzzle.last_guess?(puzzle) == false
 
       # make all the guesses (minus one)
@@ -138,13 +138,13 @@ defmodule Subtle.PuzzleTest do
 
   describe "normalized_guesses and empty_guesses" do
     test "new puzzle" do
-      puzzle = Puzzle.new("paper")
+      puzzle = Puzzle.new(answer: "paper")
       assert Enum.count(Puzzle.empty_guesses(puzzle)) == puzzle.max_guesses
       assert Enum.count(Puzzle.normalized_guesses(puzzle)) == puzzle.max_guesses
     end
 
     test "partial puzzle" do
-      puzzle = Puzzle.new("paper")
+      puzzle = Puzzle.new(answer: "paper")
       {:ok, puzzle} = Puzzle.make_guess(puzzle, "apple")
       {:ok, puzzle} = Puzzle.make_guess(puzzle, "apple")
 
@@ -153,7 +153,7 @@ defmodule Subtle.PuzzleTest do
     end
 
     test "full puzzle" do
-      puzzle = Puzzle.new("paper")
+      puzzle = Puzzle.new(answer: "paper")
       {:ok, puzzle} = Puzzle.make_guess(puzzle, "apple")
       {:ok, puzzle} = Puzzle.make_guess(puzzle, "apple")
       {:ok, puzzle} = Puzzle.make_guess(puzzle, "apple")
