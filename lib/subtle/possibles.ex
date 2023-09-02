@@ -124,12 +124,32 @@ defmodule Subtle.Possibles do
 
   """
   def process_guesses(game) do
-    Enum.reduce(
-      game.puzzle.guesses,
-      %{bad: [], good: %{}, not_here: %{}},
-      fn guess, map ->
-        Map.merge(map, process_guess(guess), &merge_guess/3)
-      end)
+    guess_map =
+      Enum.reduce(
+        game.puzzle.guesses,
+        %{bad: [], good: %{}, not_here: %{}},
+        fn guess, map ->
+          Map.merge(map, process_guess(guess), &merge_guess/3)
+        end)
+    # Remove every letter in :not_here map from :bad list.
+    remove_not_here_from_bad(guess_map)
+  end
+
+  defp remove_not_here_from_bad(guess_map) do
+    # Remove every letter in :not_here map from :bad list.
+    #
+    # A guess "again" for answer "omega" has "a" in :bad list and
+    # also :not_here list. We need to fix the :bad list so :not_here
+    # letters aren't excluded from every slot.
+    not_heres =
+      guess_map.not_here
+      |> Map.values()
+      |> List.flatten()
+      |> Enum.uniq()
+
+    filtered_bad = Enum.reject(guess_map.bad, & &1 in not_heres)
+
+    %{guess_map | bad: filtered_bad}
   end
 
   defp merge_guess(:bad, v1, v2) do
